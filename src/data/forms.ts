@@ -924,8 +924,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Rp. 500.000 - Rp. 999.999",
@@ -944,8 +944,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 5.000.000 - Rp. 20.000.000"
           },
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -2668,8 +2668,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Rp. 500.000 - Rp. 999.999",
@@ -2688,8 +2688,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 5.000.000 - Rp. 20.000.000"
           },
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -2822,8 +2822,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Rp. 500.000 - Rp. 999.999",
@@ -2842,8 +2842,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 5.000.000 - Rp. 20.000.000"
           },
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -3028,7 +3028,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "id": "form-field-informasi_tidakada_wali",
         "name": "informasi_tidakada_wali",
         "label": "Informasi Tidak ada Wali",
-        "help": "",
+        "help": "Karena tidak ada wali asuh selain orang tua, Anda bisa lanjut untuk melampirkan Berkas",
         "type": "html1",
         "required": true,
         "placeholder": "",
@@ -3042,9 +3042,9 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
     "fields": [
       {
         "id": "form-field-field_7c76167",
-        "name": "form-field-field_7c76167",
+        "name": "field_7c76167",
         "label": "Informasi",
-        "help": "",
+        "help": "LAMPIRAN BERKAS\nBerikut lampiran yang dimaksud:\n1. Akta Kelahiran\n2. Kartu Keluarga\n3. Berkas surat mutasi\n4. FC Rapot atau nilai jalan bagi siswa mutasi ke kelas 4 s/d 6\n5. KTP ayah, bunda, dan wali asuh\n\nCatatan:\n1. Untuk point ke 3 dapat diserahkan berupa hardcopy maupun softcopy dengan meng-uploud file pada form berikut.\n2. Jika siswa kelas 1 s/d 6 pindah pada pertengahan semester maka wajib melampirkan nilai jalan atau lampiran penilaian dari sekolah asal berupa hard-copy atau soft-copy di kirim ke admin.\n3. Bagi siswa mutasi kelas 4, 5, dan 6 wajib mengumpulkan FC rapot saat masuk sekolah",
         "type": "html1",
         "required": false,
         "placeholder": "",
@@ -3100,7 +3100,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
 ],
     conditionalRules: {
   "pindah_condition": {
-    "field": "jenis_pendaftaran",
+    "field": "jenis_pendaftaran_sd",
     "value": "Siswa Pindah",
     "targets": [
       "kelas_sd",
@@ -3121,6 +3121,13 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       "penghasilan_wali_sd",
       "handphone_wali_sd",
       "hubungan_wali_sd"
+    ]
+  },
+  "no_wali_condition": {
+    "field": "wali_sd",
+    "value": "Tidak",
+    "targets": [
+      "informasi_tidakada_wali"
     ]
   }
 }
@@ -3460,8 +3467,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Rp. 5.000.000 - Rp. 20. 000.000",
@@ -3476,8 +3483,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 500.000 - Rp. 999.999"
           },
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -3567,8 +3574,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Rp. 5.000.000 - Rp. 20. 000.000",
@@ -3583,8 +3590,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 500.000 - Rp. 999.999"
           },
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -3694,8 +3701,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Rp. 5.000.000 - Rp. 20. 000.000",
@@ -3710,8 +3717,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 500.000 - Rp. 999.999"
           },
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -4431,8 +4438,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Rp. 5.000.000 - Rp. 20. 000.000",
@@ -4447,8 +4454,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 500.000 - Rp. 999.999"
           },
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -4538,8 +4545,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Rp. 5.000.000 - Rp. 20. 000.000",
@@ -4554,8 +4561,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 500.000 - Rp. 999.999"
           },
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -4689,8 +4696,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "&gt;Rp. 20.000.000",
-            "text": "&gt;Rp. 20.000.000"
+            "value": ">Rp. 20.000.000",
+            "text": ">Rp. 20.000.000"
           },
           {
             "value": "Rp. 5.000.000 - Rp. 20. 000.000",
@@ -4705,8 +4712,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Rp. 500.000 - Rp. 999.999"
           },
           {
-            "value": "&lt;Rp. 500.000",
-            "text": "&lt;Rp. 500.000"
+            "value": "<Rp. 500.000",
+            "text": "<Rp. 500.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -4980,7 +4987,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "Pengacara"
           },
           {
-            "value": "Penghafal Al Qur&#039;an",
+            "value": "Penghafal Al Qur'an",
             "text": "Penghafal Al Qur'an"
           },
           {
