@@ -4,12 +4,23 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { Search, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, ArrowRight, School } from 'lucide-react';
+import { Search, FileText, CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react';
+
+type StatusResult = {
+  nomor_pendaftaran: string;
+  jenjang: string;
+  nama_lengkap: string;
+  nisn: string | null;
+  nik: string | null;
+  status: string;
+  catatan: string | null;
+  created_at: string;
+};
 
 export default function CekStatusPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [results, setResults] = useState<StatusResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -18,7 +29,7 @@ export default function CekStatusPage() {
 
     setLoading(true);
     setError(null);
-    setResult(null);
+    setResults([]);
 
     try {
       const res = await fetch(`/api/check-status?q=${encodeURIComponent(query.trim())}`);
@@ -28,9 +39,9 @@ export default function CekStatusPage() {
         throw new Error(data.message || 'Data pendaftaran tidak ditemukan.');
       }
 
-      setResult(data.data);
-    } catch (err: any) {
-      setError(err.message);
+      setResults(Array.isArray(data.results) ? data.results : [data.data]);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat mencari data.');
     } finally {
       setLoading(false);
     }
@@ -98,14 +109,15 @@ export default function CekStatusPage() {
           <form onSubmit={handleSearch} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Nomor Pendaftaran / NIK / NISN
+                Nomor Pendaftaran / NIK / NISN / No. HP Ayah atau Ibu
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Contoh: SPMB-2026-SMA-0001 atau NIK Siswa"
+                  placeholder="Contoh: 150, NIK siswa, atau 081234567890"
+                  inputMode="text"
                   className="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500"
                   required
                 />
@@ -124,7 +136,7 @@ export default function CekStatusPage() {
               </div>
             </div>
             <p className="text-[11px] text-slate-400">
-              *Nomor pendaftaran dapat dilihat pada lembar konfirmasi pendaftaran yang didapatkan saat pertama kali mendaftar.
+              *Nomor HP dapat ditulis sebagai 08xxxxxxxxxx, 628xxxxxxxxxx, atau +628xxxxxxxxxx.
             </p>
           </form>
 
@@ -132,14 +144,21 @@ export default function CekStatusPage() {
           {error && (
             <div className="mt-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
               <p className="font-semibold">{error}</p>
-              <p className="mt-0.5 text-rose-600">Pastikan nomor pendaftaran atau NIK yang Anda masukkan sudah benar.</p>
+              <p className="mt-0.5 text-rose-600">Pastikan nomor pendaftaran, identitas, atau nomor HP ayah/ibu yang dimasukkan sudah benar.</p>
             </div>
           )}
 
           {/* Result Card */}
-          {result && (
+          {results.length > 0 && (
             <div className="mt-8 pt-6 border-t border-slate-100">
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+              {results.length > 1 && (
+                <p className="mb-3 text-xs font-semibold text-slate-600">
+                  Ditemukan {results.length} pendaftaran dengan nomor HP tersebut.
+                </p>
+              )}
+              <div className="space-y-4">
+              {results.map((result) => (
+              <div key={result.nomor_pendaftaran} className="bg-slate-50 border border-slate-200 rounded-xl p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200">
                   <div>
                     <span className="text-[11px] uppercase font-bold text-slate-400 block">
@@ -199,6 +218,8 @@ export default function CekStatusPage() {
                     Cetak Bukti Pendaftaran (PDF)
                   </Link>
                 </div>
+              </div>
+              ))}
               </div>
             </div>
           )}
