@@ -164,9 +164,9 @@ export async function GET(
   page.drawImage(logo, { x: 44, y: 747, width: logoSize.width, height: logoSize.height });
 
   const contactLines = [
-    'Jl. Tukad Yeh Biu II No. 6',
-    'Dangin Puri Kauh, Denpasar Timur',
-    'Denpasar, Bali 80234',
+    'Jl. Tukad Yeh Ho III No.16',
+    'Dangin Puri Klod, Kec. Denpasar Tim.',
+    'Kota Denpasar, Bali 80234',
     'Telepon: (0361) 238 6533',
     'info@albanna.sch.id | www.albanna.sch.id',
   ];
