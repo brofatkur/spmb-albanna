@@ -152,9 +152,9 @@ export default async function BuktiPendaftaranPage({ params }: Props) {
             <h1 className="text-base font-bold tracking-wider text-slate-900 uppercase">
               SEKOLAH ALBANNA
             </h1>
-            <p>Jl. Tukad Yeh Biu II No. 6</p>
-            <p>Dangin Puri Kauh, Denpasar Timur,</p>
-            <p>Denpasar, Bali 80234</p>
+            <p>Jl. Tukad Yeh Ho III No.16</p>
+            <p>Dangin Puri Klod, Kec. Denpasar Tim.,</p>
+            <p>Kota Denpasar, Bali 80234</p>
             <p className="mt-1">Telepon: (0361) 238 6533</p>
             <p>Surel: info@albanna.sch.id</p>
             <p className="font-medium text-[#b8860b]">www.albanna.sch.id</p>
