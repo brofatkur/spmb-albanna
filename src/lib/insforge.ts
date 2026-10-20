@@ -34,7 +34,9 @@ export async function insertInsForgeRecord(record: {
         'Authorization': `Bearer ${INSFORGE_CONFIG.anonKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(record),
+      // InsForge's database endpoint expects inserts as an array, including
+      // when only one registration is being created.
+      body: JSON.stringify([record]),
     });
 
     if (!res.ok) {
