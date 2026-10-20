@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { verifyAdminSession } from '@/lib/admin-session';
 import { cookies } from 'next/headers';
 
 async function checkAdminAuth() {
@@ -7,8 +8,7 @@ async function checkAdminAuth() {
   const session = cookieStore.get('admin_session');
   if (!session?.value) return false;
   try {
-    const data = JSON.parse(Buffer.from(session.value, 'base64').toString('utf-8'));
-    return !!data.username;
+    return verifyAdminSession(session.value) !== null;
   } catch {
     return false;
   }
