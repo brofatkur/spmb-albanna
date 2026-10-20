@@ -5,6 +5,7 @@ import { JenjangConfig, FormField } from '@/data/forms';
 import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import RegionSelect, { RegionLevel } from './RegionSelect';
+import { UPLOAD_ACCEPT_ATTRIBUTE, validateUploadFile } from '@/lib/upload';
 
 interface Props {
   config: JenjangConfig;
@@ -166,11 +167,11 @@ export default function RegistrationForm({ config }: Props) {
       return;
     }
 
-    // 5MB limit check
-    if (file.size > 5 * 1024 * 1024) {
+    const validationError = validateUploadFile(file);
+    if (validationError) {
       setErrors((prev) => ({
         ...prev,
-        [fieldName]: 'Ukuran berkas melebihi 5MB. Silakan kompres atau pilih berkas lain.',
+        [fieldName]: validationError,
       }));
       return;
     }
@@ -555,7 +556,7 @@ export default function RegistrationForm({ config }: Props) {
                         type="file"
                         onChange={(e) => handleFileChange(field.name, e.target.files?.[0] || null)}
                         className="sr-only"
-                        accept="image/*,application/pdf"
+                        accept={UPLOAD_ACCEPT_ATTRIBUTE}
                       />
                       <Upload className={`w-8 h-8 mb-2 ${fileMap[field.name] ? 'text-emerald-600' : 'text-slate-400'}`} />
                       {fileMap[field.name] ? (
@@ -573,7 +574,7 @@ export default function RegistrationForm({ config }: Props) {
                             Pilih Berkas atau Tarik ke Sini
                           </p>
                           <p className="text-[11px] text-slate-400 mt-1">
-                            Format PDF, JPG, PNG (Maksimal 5MB)
+                            PDF atau gambar umum, termasuk JPG, PNG, WEBP dan HEIC (maks. 5MB)
                           </p>
                         </div>
                       )}
