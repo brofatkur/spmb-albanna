@@ -91,11 +91,20 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const record = db.prepare(`
+  // A public registration number can be the same as another row's internal
+  // SQLite id after importing historical records. Resolve the registration
+  // number first so /150 cannot accidentally return the row whose id is 150.
+  const recordByNumber = db.prepare(`
     SELECT * FROM registrations
-    WHERE LOWER(nomor_pendaftaran) = LOWER(?) OR CAST(id AS TEXT) = ?
+    WHERE LOWER(nomor_pendaftaran) = LOWER(?)
     LIMIT 1
-  `).get(id, id) as RegistrationRecord | undefined;
+  `).get(id) as RegistrationRecord | undefined;
+
+  const record = recordByNumber || db.prepare(`
+    SELECT * FROM registrations
+    WHERE CAST(id AS TEXT) = ?
+    LIMIT 1
+  `).get(id) as RegistrationRecord | undefined;
 
   if (!record) {
     return Response.json({ error: 'Data pendaftaran tidak ditemukan.' }, { status: 404 });
