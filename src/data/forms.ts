@@ -21,6 +21,13 @@ export interface FormStep {
   fields: FormField[];
 }
 
+export interface ConditionalRule {
+  field: string;
+  value?: string;
+  values?: string[];
+  targets: string[];
+}
+
 export interface JenjangConfig {
   id: string;
   name: string;
@@ -32,7 +39,7 @@ export interface JenjangConfig {
   badge: string;
   tagline: string;
   steps: FormStep[];
-  conditionalRules: any;
+  conditionalRules: Record<string, ConditionalRule>;
 }
 
 export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
@@ -220,7 +227,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -358,33 +365,33 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-tinggi_badan_paud",
         "name": "tinggi_badan_paud",
-        "label": "Tinggi Badan Peserta Didik",
+        "label": "Tinggi Badan (cm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 135 cm",
+        "placeholder": "Contoh: 135",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-berat_badan_paud",
         "name": "berat_badan_paud",
-        "label": "Berat Badan Peserta Didik",
+        "label": "Berat Badan (kg)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 43 kg",
+        "placeholder": "Contoh: 43",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-lingkar_kepala_paud",
         "name": "lingkar_kepala_paud",
-        "label": "Lingkar Kepala Siswa",
+        "label": "Lingkar Kepala (mm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "",
+        "placeholder": "Contoh: 430",
         "options": [],
         "width": 100
       },
@@ -411,12 +418,41 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-waktu_tempuh_paud",
         "name": "waktu_tempuh_paud",
-        "label": "Waktu Tempuh",
+        "label": "Waktu Tempuh dari Rumah ke Sekolah",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "5 Menit",
+            "text": "5 Menit"
+          },
+          {
+            "value": "10 Menit",
+            "text": "10 Menit"
+          },
+          {
+            "value": "15 Menit",
+            "text": "15 Menit"
+          },
+          {
+            "value": "20 Menit",
+            "text": "20 Menit"
+          },
+          {
+            "value": "25 Menit",
+            "text": "25 Menit"
+          },
+          {
+            "value": "30 Menit",
+            "text": "30 Menit"
+          },
+          {
+            "value": "Lebih dari 30 Menit",
+            "text": "Lebih dari 30 Menit"
+          }
+        ],
         "width": 100
       },
       {
@@ -458,7 +494,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "RT (Sesuai KK)",
         "help": "",
         "type": "text",
-        "required": true,
+        "required": false,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -469,7 +505,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "RW (Sesuai KK)",
         "help": "",
         "type": "text",
-        "required": true,
+        "required": false,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -480,7 +516,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Dusun (Sesuai KK)",
         "help": "",
         "type": "text",
-        "required": true,
+        "required": false,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -491,7 +527,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Kelurahan/Desa (Sesuai KK)",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -502,7 +538,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kecamatan (Sesuai KK)",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -513,7 +549,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kabupaten / Kota (Sesuai KK)",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -546,7 +582,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Alamat Tinggal Siswa Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -557,7 +593,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Dusun (Domisili / di Bali)",
         "help": "",
         "type": "text",
-        "required": true,
+        "required": false,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -696,11 +732,11 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-jumlah_saudara_paud",
         "name": "jumlah_saudara_paud",
-        "label": "Jumlah Saudara Kandung dipilih jumlah saudara kandung, dan lainnya jika ada saudara tiri",
-        "help": "",
+        "label": "Jumlah Saudara Kandung",
+        "help": "Isi jumlah saudara kandung (seayah dan seibu), tidak termasuk peserta didik yang sedang didaftarkan. Jika anak tunggal, isi 0.",
         "type": "number",
         "required": true,
-        "placeholder": "",
+        "placeholder": "Contoh: 0",
         "options": [],
         "width": 100
       }
@@ -758,7 +794,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "diisi sesuai dengan KTP",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -924,36 +960,32 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 1.000.000 - Rp. 1.999.999",
-            "text": "Rp. 1.000.000 - Rp. 1.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20.000.000",
-            "text": "Rp. 5.000.000 - Rp. 20.000.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
           },
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
             "text": "Tidak Berpenghasilan"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -1034,7 +1066,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -1223,7 +1255,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Apakah ada wali asuh selain orangtua kandung siswa?",
         "help": "",
         "type": "select",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [
           {
@@ -1271,7 +1303,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -1302,10 +1334,39 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "penghasilan_wali_paud",
         "label": "Penghasilan Bulanan Wali Asuh",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
+          },
+          {
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
+          },
+          {
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
+          },
+          {
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
+          },
+          {
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
+          },
+          {
+            "value": "Tidak Berpenghasilan",
+            "text": "Tidak Berpenghasilan"
+          }
+        ],
         "width": 100
       }
     ]
@@ -1366,10 +1427,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "pengalaman_ibu",
         "label": "Apakah ibu mengalami stres atau tekanan emosional yang berat selama kehamilan? jelaskan!",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Ya",
+            "text": "Ya"
+          },
+          {
+            "value": "Tidak",
+            "text": "Tidak"
+          }
+        ],
         "width": 100
       },
       {
@@ -1441,10 +1511,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "apakah_anak_pernah_mengalami_penyakit_serius_atau_dirawat_di_rumah_sakit",
         "label": "Apakah anak pernah mengalami penyakit serius atau dirawat di rumah sakit?",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Ya",
+            "text": "Ya"
+          },
+          {
+            "value": "Tidak",
+            "text": "Tidak"
+          }
+        ],
         "width": 100
       },
       {
@@ -1452,10 +1531,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "apakah_anak_memiliki_masalah_dalam_penglihatan_atau_pendengaran",
         "label": "Apakah anak memiliki masalah dalam penglihatan atau pendengaran?",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Ya",
+            "text": "Ya"
+          },
+          {
+            "value": "Tidak",
+            "text": "Tidak"
+          }
+        ],
         "width": 100
       },
       {
@@ -1575,10 +1663,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "apakah_anak_menunjukkan_perilaku_sensori_tertentu",
         "label": "Apakah anak menunjukkan perilaku sensori tertentu (misalnya, sangat sensitif terhadap suara, sentuhan, atau cahaya)?",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Ya",
+            "text": "Ya"
+          },
+          {
+            "value": "Tidak",
+            "text": "Tidak"
+          }
+        ],
         "width": 100
       },
       {
@@ -1597,10 +1694,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "apakah_anak_dapat_mengungkapkan_kebutuhan_dan_keinginannya_dengan_jelas",
         "label": "Apakah anak dapat mengungkapkan kebutuhan dan keinginannya dengan jelas?",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Ya",
+            "text": "Ya"
+          },
+          {
+            "value": "Tidak",
+            "text": "Tidak"
+          }
+        ],
         "width": 100
       },
       {
@@ -1608,10 +1714,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "apakah_anak_mampu_bersosialisasi_dengan_anak_lain",
         "label": "Apakah anak mampu bersosialisasi dengan anak lain?",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Ya",
+            "text": "Ya"
+          },
+          {
+            "value": "Tidak",
+            "text": "Tidak"
+          }
+        ],
         "width": 100
       },
       {
@@ -1869,19 +1984,19 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
   }
 ],
     conditionalRules: {
-  "wali_condition": {
-    "field": "wali_paud",
-    "value": "Ya",
-    "targets": [
-      "nama_wali_asuh_paud",
-      "nik_wali_paud",
-      "ttl_wali_paud",
-      "pendidikan_wali_paud",
-      "pekerjaan_wali_paud",
-      "penghasilan_wali_paud"
-    ]
-  }
-}
+      "wali_condition": {
+        "field": "wali_paud",
+        "value": "Ya",
+        "targets": [
+          "nama_wali_asuh_paud",
+          "nik_wali_paud",
+          "ttl_wali_paud",
+          "pendidikan_wali_paud",
+          "pekerjaan_wali_paud",
+          "penghasilan_wali_paud"
+        ]
+      }
+    }
   },
   sd: {
     id: 'sd',
@@ -1980,7 +2095,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": false,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -2093,7 +2208,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -2158,7 +2273,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Alamat Tinggal Siswa Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -2169,7 +2284,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Kelurahan/Desa Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -2180,7 +2295,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kecamatan Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -2191,7 +2306,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kabupaten / Kota Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -2299,6 +2414,46 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "width": 100
       },
       {
+        "id": "form-field-waktu_tempuh_sd",
+        "name": "waktu_tempuh_sd",
+        "label": "Waktu Tempuh dari Rumah ke Sekolah",
+        "help": "",
+        "type": "select",
+        "required": true,
+        "placeholder": "",
+        "options": [
+          {
+            "value": "5 Menit",
+            "text": "5 Menit"
+          },
+          {
+            "value": "10 Menit",
+            "text": "10 Menit"
+          },
+          {
+            "value": "15 Menit",
+            "text": "15 Menit"
+          },
+          {
+            "value": "20 Menit",
+            "text": "20 Menit"
+          },
+          {
+            "value": "25 Menit",
+            "text": "25 Menit"
+          },
+          {
+            "value": "30 Menit",
+            "text": "30 Menit"
+          },
+          {
+            "value": "Lebih dari 30 Menit",
+            "text": "Lebih dari 30 Menit"
+          }
+        ],
+        "width": 100
+      },
+      {
         "id": "form-field-alamat_kk_sd",
         "name": "alamat_kk_sd",
         "label": "Alamat Sesuai Kartu Keluarga (KK)",
@@ -2367,22 +2522,33 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-tinggi_badan_sd",
         "name": "tinggi_badan_sd",
-        "label": "Tinggi Badan Peserta Didik",
+        "label": "Tinggi Badan (cm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 135 cm",
+        "placeholder": "Contoh: 135",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-berat_badan_sd",
         "name": "berat_badan_sd",
-        "label": "Berat Badan Peserta Didik",
+        "label": "Berat Badan (kg)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 43 kg",
+        "placeholder": "Contoh: 43",
+        "options": [],
+        "width": 100
+      },
+      {
+        "id": "form-field-lingkar_kepala_sd",
+        "name": "lingkar_kepala_sd",
+        "label": "Lingkar Kepala (mm)",
+        "help": "",
+        "type": "number",
+        "required": true,
+        "placeholder": "Contoh: 430",
         "options": [],
         "width": 100
       },
@@ -2435,14 +2601,6 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
           {
             "value": "Tidak",
             "text": "Tidak"
-          },
-          {
-            "value": "Dalam Proses",
-            "text": "Dalam Proses"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -2463,14 +2621,6 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
           {
             "value": "Tidak",
             "text": "Tidak"
-          },
-          {
-            "value": "Dalam Proses",
-            "text": "Dalam Proses"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -2668,36 +2818,32 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 1.000.000 - Rp. 1.999.999",
-            "text": "Rp. 1.000.000 - Rp. 1.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20.000.000",
-            "text": "Rp. 5.000.000 - Rp. 20.000.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
           },
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
             "text": "Tidak Berpenghasilan"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -2822,36 +2968,32 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 1.000.000 - Rp. 1.999.999",
-            "text": "Rp. 1.000.000 - Rp. 1.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20.000.000",
-            "text": "Rp. 5.000.000 - Rp. 20.000.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
           },
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
             "text": "Tidak Berpenghasilan"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -2906,7 +3048,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Apakah ada wali asuh selain orangtua kandung siswa?",
         "help": "",
         "type": "select",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [
           {
@@ -2996,10 +3138,39 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "name": "penghasilan_wali_sd",
         "label": "Penghasilan Bulanan Wali Asuh",
         "help": "",
-        "type": "text",
+        "type": "select",
         "required": true,
         "placeholder": "",
-        "options": [],
+        "options": [
+          {
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
+          },
+          {
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
+          },
+          {
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
+          },
+          {
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
+          },
+          {
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
+          },
+          {
+            "value": "Tidak Berpenghasilan",
+            "text": "Tidak Berpenghasilan"
+          }
+        ],
         "width": 100
       },
       {
@@ -3099,38 +3270,56 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
   }
 ],
     conditionalRules: {
-  "pindah_condition": {
-    "field": "jenis_pendaftaran_sd",
-    "value": "Siswa Pindah",
-    "targets": [
-      "kelas_sd",
-      "tanggal_masuk_sd",
-      "file_mutasi_sd"
-    ]
-  },
-  "wali_condition": {
-    "field": "wali_sd",
-    "value": "Ya",
-    "targets": [
-      "nama_wali_asuh_sd",
-      "nik_wali_sd",
-      "ttl_wali_sd",
-      "pendidikan_wali_sd",
-      "pekerjaan_wali_sd",
-      "tempat_kerja_wali_sd",
-      "penghasilan_wali_sd",
-      "handphone_wali_sd",
-      "hubungan_wali_sd"
-    ]
-  },
-  "no_wali_condition": {
-    "field": "wali_sd",
-    "value": "Tidak",
-    "targets": [
-      "informasi_tidakada_wali"
-    ]
-  }
-}
+      "pindah_condition": {
+        "field": "jenis_pendaftaran_sd",
+        "value": "Siswa Pindah",
+        "targets": [
+          "kelas_sd",
+          "tanggal_masuk_sd",
+          "file_mutasi_sd"
+        ]
+      },
+      "wali_condition": {
+        "field": "wali_sd",
+        "value": "Ya",
+        "targets": [
+          "nama_wali_asuh_sd",
+          "nik_wali_sd",
+          "ttl_wali_sd",
+          "pendidikan_wali_sd",
+          "pekerjaan_wali_sd",
+          "tempat_kerja_wali_sd",
+          "penghasilan_wali_sd",
+          "handphone_wali_sd",
+          "hubungan_wali_sd"
+        ]
+      },
+      "no_wali_condition": {
+        "field": "wali_sd",
+        "value": "Tidak",
+        "targets": [
+          "informasi_tidakada_wali"
+        ]
+      },
+      "kip_condition": {
+        "field": "kip_sd",
+        "values": [
+          "Ya"
+        ],
+        "targets": [
+          "nomor_kip_sd"
+        ]
+      },
+      "kps_condition": {
+        "field": "kps_pkh_sd",
+        "values": [
+          "Ya"
+        ],
+        "targets": [
+          "nomor_kpspkh_sd"
+        ]
+      }
+    }
   },
   smp: {
     id: 'smp',
@@ -3195,7 +3384,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -3227,7 +3416,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Alamat domisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -3238,7 +3427,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Kelurahan/Desa Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -3249,7 +3438,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kecamatan Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -3260,7 +3449,18 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kabupaten/Kota Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
+        "placeholder": "",
+        "options": [],
+        "width": 100
+      },
+      {
+        "id": "form-field-provinsi_smp",
+        "name": "provinsi_smp",
+        "label": "Provinsi Tempat tinggal saat ini",
+        "help": "",
+        "type": "text",
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -3467,24 +3667,28 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20. 000.000",
-            "text": "Rp. 5.000.000 - Rp. 20. 000.000"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -3574,24 +3778,28 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20. 000.000",
-            "text": "Rp. 5.000.000 - Rp. 20. 000.000"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -3611,7 +3819,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Apakah ada wali asuh selain orangtua kandung siswa?",
         "help": "",
         "type": "select",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [
           {
@@ -3665,7 +3873,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -3701,24 +3909,28 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20. 000.000",
-            "text": "Rp. 5.000.000 - Rp. 20. 000.000"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -3847,33 +4059,33 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-tinggi_badan_smp",
         "name": "tinggi_badan_smp",
-        "label": "Tinggi Badan Peserta Didik",
+        "label": "Tinggi Badan (cm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 135 cm",
+        "placeholder": "Contoh: 135",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-berat_badan_smp",
         "name": "berat_badan_smp",
-        "label": "Berat Badan Peserta Didik",
+        "label": "Berat Badan (kg)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 43 kg",
+        "placeholder": "Contoh: 43",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-lingkar_kepala_smp",
         "name": "lingkar_kepala_smp",
-        "label": "Lingkar Kepala (cm)",
+        "label": "Lingkar Kepala (mm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 43 cm",
+        "placeholder": "Contoh: 430",
         "options": [],
         "width": 100
       },
@@ -3911,8 +4123,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "5 km"
           },
           {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
+            "value": "Lebih dari 5 km",
+            "text": "Lebih dari 5 km"
           }
         ],
         "width": 100
@@ -3920,7 +4132,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-waktu_tempuh_smp",
         "name": "waktu_tempuh_smp",
-        "label": "Waktu tempuh dari rumah ke sekolah (menit)",
+        "label": "Waktu Tempuh dari Rumah ke Sekolah",
         "help": "",
         "type": "select",
         "required": true,
@@ -3951,8 +4163,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "30 Menit"
           },
           {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
+            "value": "Lebih dari 30 Menit",
+            "text": "Lebih dari 30 Menit"
           }
         ],
         "width": 100
@@ -3978,14 +4190,6 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
           {
             "value": "Tidak",
             "text": "Tidak"
-          },
-          {
-            "value": "Dalam Proses",
-            "text": "Dalam Proses"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -4017,14 +4221,6 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
           {
             "value": "Tidak",
             "text": "Tidak"
-          },
-          {
-            "value": "Dalam Proses",
-            "text": "Dalam Proses"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -4044,20 +4240,38 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
   }
 ],
     conditionalRules: {
-  "wali_condition": {
-    "field": "wali_smp",
-    "value": "Ya",
-    "targets": [
-      "nama_wali_smp",
-      "nik_wali_smp",
-      "handphone_wali_smp",
-      "tahun_lahir_wali_smp",
-      "pendidikan_wali_smp",
-      "pekerjaa_wali_smp",
-      "penghasilan_wali_smp"
-    ]
-  }
-}
+      "wali_condition": {
+        "field": "wali_smp",
+        "value": "Ya",
+        "targets": [
+          "nama_wali_smp",
+          "nik_wali_smp",
+          "handphone_wali_smp",
+          "tahun_lahir_wali_smp",
+          "pendidikan_wali_smp",
+          "pekerjaa_wali_smp",
+          "penghasilan_wali_smp"
+        ]
+      },
+      "kip_condition": {
+        "field": "kip_smp",
+        "values": [
+          "Ya"
+        ],
+        "targets": [
+          "nomor_kip_smp"
+        ]
+      },
+      "kps_condition": {
+        "field": "kps_pkh_smp",
+        "values": [
+          "Ya"
+        ],
+        "targets": [
+          "nomor_kpspkh_smp"
+        ]
+      }
+    }
   },
   sma: {
     id: 'sma',
@@ -4133,7 +4347,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "help": "",
         "type": "date",
         "required": true,
-        "placeholder": "",
+        "placeholder": "DD/MM/YYYY",
         "options": [],
         "width": 100
       },
@@ -4165,7 +4379,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Alamat domisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4176,7 +4390,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Kelurahan/Desa Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4187,7 +4401,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kecamatan Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4198,7 +4412,18 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kabupaten/Kota Tempat tinggal saat ini yang berdomisili di Bali",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
+        "placeholder": "",
+        "options": [],
+        "width": 100
+      },
+      {
+        "id": "form-field-provinsi_sma",
+        "name": "provinsi_sma",
+        "label": "Provinsi Tempat tinggal saat ini",
+        "help": "",
+        "type": "text",
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4231,7 +4456,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Nama Kelurahan/Desa (sesuai KK)",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4242,7 +4467,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kecamatan (sesuai KK)",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4253,7 +4478,18 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Kabupaten / Kota (sesuai KK)",
         "help": "",
         "type": "text",
-        "required": false,
+        "required": true,
+        "placeholder": "",
+        "options": [],
+        "width": 100
+      },
+      {
+        "id": "form-field-provinsi_kk_sma",
+        "name": "provinsi_kk_sma",
+        "label": "Provinsi (sesuai KK)",
+        "help": "",
+        "type": "text",
+        "required": true,
         "placeholder": "",
         "options": [],
         "width": 100
@@ -4438,24 +4674,28 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20. 000.000",
-            "text": "Rp. 5.000.000 - Rp. 20. 000.000"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -4545,24 +4785,28 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20. 000.000",
-            "text": "Rp. 5.000.000 - Rp. 20. 000.000"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -4582,7 +4826,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "label": "Apakah ada wali asuh selain orangtua kandung siswa?",
         "help": "",
         "type": "select",
-        "required": false,
+        "required": true,
         "placeholder": "",
         "options": [
           {
@@ -4696,24 +4940,28 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
         "placeholder": "",
         "options": [
           {
-            "value": ">Rp. 20.000.000",
-            "text": ">Rp. 20.000.000"
+            "value": "Kurang dari atau sama dengan Rp 500.000",
+            "text": "Kurang dari atau sama dengan Rp 500.000"
           },
           {
-            "value": "Rp. 5.000.000 - Rp. 20. 000.000",
-            "text": "Rp. 5.000.000 - Rp. 20. 000.000"
+            "value": "Rp 500.001 - Rp 999.999",
+            "text": "Rp 500.001 - Rp 999.999"
           },
           {
-            "value": "Rp. 2.000.000 - Rp. 4.999.999",
-            "text": "Rp. 2.000.000 - Rp. 4.999.999"
+            "value": "Rp 1.000.000 - Rp 1.999.999",
+            "text": "Rp 1.000.000 - Rp 1.999.999"
           },
           {
-            "value": "Rp. 500.000 - Rp. 999.999",
-            "text": "Rp. 500.000 - Rp. 999.999"
+            "value": "Rp 2.000.000 - Rp 4.999.999",
+            "text": "Rp 2.000.000 - Rp 4.999.999"
           },
           {
-            "value": "<Rp. 500.000",
-            "text": "<Rp. 500.000"
+            "value": "Rp 5.000.000 - Rp 19.999.999",
+            "text": "Rp 5.000.000 - Rp 19.999.999"
+          },
+          {
+            "value": "Lebih dari atau sama dengan Rp 20.000.000",
+            "text": "Lebih dari atau sama dengan Rp 20.000.000"
           },
           {
             "value": "Tidak Berpenghasilan",
@@ -5060,33 +5308,33 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-tinggi_badan_sma",
         "name": "tinggi_badan_sma",
-        "label": "Tinggi Badan Peserta Didik",
+        "label": "Tinggi Badan (cm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 135 cm",
+        "placeholder": "Contoh: 135",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-berat_badan_sma",
         "name": "berat_badan_sma",
-        "label": "Berat Badan Peserta Didik",
+        "label": "Berat Badan (kg)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 43 kg",
+        "placeholder": "Contoh: 43",
         "options": [],
         "width": 100
       },
       {
         "id": "form-field-lingkar_kepala_sma",
         "name": "lingkar_kepala_sma",
-        "label": "Lingkar Kepala (cm)",
+        "label": "Lingkar Kepala (mm)",
         "help": "",
-        "type": "text",
+        "type": "number",
         "required": true,
-        "placeholder": "Contoh: 43 cm",
+        "placeholder": "Contoh: 430",
         "options": [],
         "width": 100
       },
@@ -5124,8 +5372,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "5 km"
           },
           {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
+            "value": "Lebih dari 5 km",
+            "text": "Lebih dari 5 km"
           }
         ],
         "width": 100
@@ -5133,7 +5381,7 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
       {
         "id": "form-field-waktu_tempuh_sma",
         "name": "waktu_tempuh_sma",
-        "label": "Waktu tempuh dari rumah ke sekolah (menit)",
+        "label": "Waktu Tempuh dari Rumah ke Sekolah",
         "help": "",
         "type": "select",
         "required": true,
@@ -5164,8 +5412,8 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
             "text": "30 Menit"
           },
           {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
+            "value": "Lebih dari 30 Menit",
+            "text": "Lebih dari 30 Menit"
           }
         ],
         "width": 100
@@ -5191,14 +5439,6 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
           {
             "value": "Tidak",
             "text": "Tidak"
-          },
-          {
-            "value": "Dalam Proses",
-            "text": "Dalam Proses"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -5230,14 +5470,6 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
           {
             "value": "Tidak",
             "text": "Tidak"
-          },
-          {
-            "value": "Dalam Proses",
-            "text": "Dalam Proses"
-          },
-          {
-            "value": "Yang Lain",
-            "text": "Yang Lain"
           }
         ],
         "width": 100
@@ -5257,20 +5489,38 @@ export const JENJANG_CONFIGS: Record<string, JenjangConfig> = {
   }
 ],
     conditionalRules: {
-  "wali_condition": {
-    "field": "wali_sma",
-    "value": "Ya",
-    "targets": [
-      "nama_wali_sma",
-      "handphone_wali_sma",
-      "nik_wali_sma",
-      "tahun_lahir_wali_sma",
-      "pendidikan_wali_sma",
-      "pekerjaan_wali_sma",
-      "penghasilan_wali_sma",
-      "hubungan_wali_sma"
-    ]
-  }
-}
+      "wali_condition": {
+        "field": "wali_sma",
+        "value": "Ya",
+        "targets": [
+          "nama_wali_sma",
+          "handphone_wali_sma",
+          "nik_wali_sma",
+          "tahun_lahir_wali_sma",
+          "pendidikan_wali_sma",
+          "pekerjaan_wali_sma",
+          "penghasilan_wali_sma",
+          "hubungan_wali_sma"
+        ]
+      },
+      "kip_condition": {
+        "field": "kip_sma",
+        "values": [
+          "Ya"
+        ],
+        "targets": [
+          "nomor_kip_sma"
+        ]
+      },
+      "kps_condition": {
+        "field": "kps_pkh_sma",
+        "values": [
+          "Ya"
+        ],
+        "targets": [
+          "nomor_kpspkh_sma"
+        ]
+      }
+    }
   }
 };
