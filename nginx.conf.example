@@ -1,0 +1,48 @@
+# Nginx Reverse Proxy Configuration for spmb.albanna.sch.id
+server {
+    listen 80;
+    server_name spmb.albanna.sch.id;
+
+    # Redirect all HTTP traffic to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name spmb.albanna.sch.id;
+
+    # SSL Certificates (Let's Encrypt / Certbot)
+    ssl_certificate /etc/letsencrypt/live/spmb.albanna.sch.id/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/spmb.albanna.sch.id/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Max upload size for attachments (KK, Akta, Raport, Mutasi)
+    client_max_body_size 25M;
+
+    # Next.js Node.js process (PM2 or Docker running on port 3000)
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Static assets caching
+    location /_next/static {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_cache_valid 200 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Uploads folder
+    location /uploads {
+        proxy_pass http://127.0.0.1:3000;
+        add_header Cache-Control "public, max-age=86400";
+    }
+}
