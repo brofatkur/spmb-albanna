@@ -40,6 +40,12 @@ export default function RegistrationForm({ config }: Props) {
       return parentVal === rules.wali_condition.value;
     }
 
+    // SD information shown when the student has no guardian besides parents.
+    if (rules.no_wali_condition && rules.no_wali_condition.targets.includes(field.name)) {
+      const parentVal = formData[rules.no_wali_condition.field];
+      return parentVal === rules.no_wali_condition.value;
+    }
+
     return true;
   };
 
@@ -97,6 +103,9 @@ export default function RegistrationForm({ config }: Props) {
     const visibleFields = currentStep.fields.filter(isFieldVisible);
 
     for (const f of visibleFields) {
+      // Informational blocks mirror Elementor's HTML fields and do not accept input.
+      if (f.type === 'html1') continue;
+
       if (f.required) {
         if (f.type === 'upload') {
           if (!fileMap[f.name]) {
@@ -324,7 +333,10 @@ export default function RegistrationForm({ config }: Props) {
             if (field.type === 'html1') {
               return (
                 <div key={field.name} className={`${colSpanClass} p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs leading-relaxed`}>
-                  {field.label}
+                  <p className="font-bold text-sm">{field.label}</p>
+                  {field.help && (
+                    <p className="mt-2 whitespace-pre-line">{field.help}</p>
+                  )}
                 </div>
               );
             }
