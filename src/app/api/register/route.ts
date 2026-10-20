@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { createGoogleSheetRegistration, insertInsForgeRecord } from '@/lib/insforge';
+import {
+  createGoogleSheetRegistration,
+  insertInsForgeRecord,
+  syncGoogleDriveRegistrationPdf,
+} from '@/lib/insforge';
 import fs from 'fs';
 import path from 'path';
 
@@ -21,7 +25,7 @@ export async function POST(req: NextRequest) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const dataObj: Record<string, any> = {};
+    const dataObj: Record<string, string | string[]> = {};
     const filePaths: Record<string, string> = {};
 
     for (const [key, value] of formData.entries()) {
@@ -43,91 +47,75 @@ export async function POST(req: NextRequest) {
       } else {
         if (key.endsWith('[]')) {
           const cleanKey = key.slice(0, -2);
-          if (!dataObj[cleanKey]) {
-            dataObj[cleanKey] = [];
-          }
-          dataObj[cleanKey].push(value);
+          const existing = dataObj[cleanKey];
+          dataObj[cleanKey] = Array.isArray(existing) ? [...existing, value] : [value];
         } else {
           dataObj[key] = value;
         }
       }
     }
 
+    const firstText = (...values: Array<string | string[] | null | undefined>) => {
+      for (const value of values) {
+        if (typeof value === 'string' && value.trim()) return value;
+      }
+      return null;
+    };
+
     // Extract core fields based on jenjang naming conventions
-    const namaLengkap =
-      dataObj[`nama_lengkap_${jenjang}`] ||
-      dataObj['nama_lengkap'] ||
-      dataObj['nama_siswa'] ||
-      dataObj['nama_calon_siswa'] ||
-      'Calon Murid';
+    const namaLengkap = firstText(
+      dataObj[`nama_lengkap_${jenjang}`],
+      dataObj['nama_lengkap'],
+      dataObj['nama_siswa'],
+      dataObj['nama_calon_siswa']
+    ) || 'Calon Murid';
 
-    const namaPanggilan =
-      dataObj[`nama_panggilan_${jenjang}`] ||
-      dataObj['nama_panggilan'] ||
-      null;
+    const namaPanggilan = firstText(dataObj[`nama_panggilan_${jenjang}`], dataObj['nama_panggilan']);
 
-    const nisn =
-      dataObj[`nisn_${jenjang}`] ||
-      dataObj['nisn'] ||
-      null;
+    const nisn = firstText(dataObj[`nisn_${jenjang}`], dataObj['nisn']);
 
-    const nik =
-      dataObj[`nik_${jenjang}`] ||
-      dataObj['nik'] ||
-      null;
+    const nik = firstText(dataObj[`nik_${jenjang}`], dataObj['nik']);
 
-    const jenisKelamin =
-      dataObj[`jenis_kelamin_${jenjang}`] ||
-      dataObj['jenis_kelamin'] ||
-      null;
+    const jenisKelamin = firstText(dataObj[`jenis_kelamin_${jenjang}`], dataObj['jenis_kelamin']);
 
-    const sekolahAsal =
-      dataObj[`sekolah_asal_${jenjang}`] ||
-      dataObj['sekolah_asal'] ||
-      dataObj['nama_sekolah_asal'] ||
-      null;
+    const sekolahAsal = firstText(
+      dataObj[`sekolah_asal_${jenjang}`],
+      dataObj['sekolah_asal'],
+      dataObj['nama_sekolah_asal']
+    );
 
-    const alamatDomisili =
-      dataObj[`alamat_tempat_tinggal_${jenjang}`] ||
-      dataObj[`alamat_domisili_${jenjang}`] ||
-      dataObj['alamat_tempat_tinggal'] ||
-      dataObj['alamat_domisili'] ||
-      dataObj['alamat'] ||
-      null;
+    const alamatDomisili = firstText(
+      dataObj[`alamat_tempat_tinggal_${jenjang}`],
+      dataObj[`alamat_domisili_${jenjang}`],
+      dataObj['alamat_tempat_tinggal'],
+      dataObj['alamat_domisili'],
+      dataObj['alamat']
+    );
 
-    const namaAyah =
-      dataObj[`nama_ayah_${jenjang}`] ||
-      dataObj['nama_ayah'] ||
-      null;
+    const namaAyah = firstText(dataObj[`nama_ayah_${jenjang}`], dataObj['nama_ayah']);
 
-    const handphoneAyah =
-      dataObj[`handphone_ayah_${jenjang}`] ||
-      dataObj[`no_handphone_ayah_${jenjang}`] ||
-      dataObj['handphone_ayah'] ||
-      null;
+    const handphoneAyah = firstText(
+      dataObj[`handphone_ayah_${jenjang}`],
+      dataObj[`no_handphone_ayah_${jenjang}`],
+      dataObj['handphone_ayah']
+    );
 
-    const namaIbu =
-      dataObj[`nama_ibu_${jenjang}`] ||
-      dataObj['nama_ibu'] ||
-      null;
+    const namaIbu = firstText(dataObj[`nama_ibu_${jenjang}`], dataObj['nama_ibu']);
 
-    const handphoneIbu =
-      dataObj[`handphone_ibu_${jenjang}`] ||
-      dataObj[`no_handphone_ibu_${jenjang}`] ||
-      dataObj['handphone_ibu'] ||
-      null;
+    const handphoneIbu = firstText(
+      dataObj[`handphone_ibu_${jenjang}`],
+      dataObj[`no_handphone_ibu_${jenjang}`],
+      dataObj['handphone_ibu']
+    );
 
-    const noHandphone =
-      dataObj[`no_handphone_${jenjang}`] ||
-      handphoneAyah ||
-      handphoneIbu ||
-      dataObj['no_handphone'] ||
-      null;
+    const noHandphone = firstText(
+      dataObj[`no_handphone_${jenjang}`],
+      handphoneAyah,
+      handphoneIbu,
+      dataObj['no_handphone']
+    );
 
-    const email =
-      dataObj[`email_${jenjang}`] ||
-      dataObj['email'] ||
-      null;
+    const email = firstText(dataObj[`email_${jenjang}`], dataObj['email']);
 
     // Keep the existing global registration sequence in Google Sheets as the
     // single source of truth while the old Elementor form is still active.
@@ -234,6 +222,19 @@ export async function POST(req: NextRequest) {
       console.error('Failed to sync to InsForge:', e)
     );
 
+    // The Apps Script webhook has already copied uploaded attachments to the
+    // student's Drive folder. After the local record exists, ask it to fetch
+    // and store the generated registration receipt in the same folder.
+    const pdfSyncResult = await syncGoogleDriveRegistrationPdf({
+      nomor_pendaftaran: nomorPendaftaran,
+      jenjang: jenjang.toUpperCase(),
+      nama_lengkap: String(namaLengkap),
+      pdf_url: `${appUrl}/api/registrations/${encodeURIComponent(nomorPendaftaran)}/pdf`,
+    });
+    if (!pdfSyncResult.success) {
+      console.error('Failed to sync registration PDF to Google Drive:', pdfSyncResult);
+    }
+
     return NextResponse.json({
       success: true,
       nomor_pendaftaran: nomorPendaftaran,
@@ -241,10 +242,11 @@ export async function POST(req: NextRequest) {
       jenjang: jenjang.toUpperCase(),
       message: 'Pendaftaran berhasil dikirim!',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error during registration submission:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, message: 'Terjadi kesalahan sistem saat menyimpan pendaftaran: ' + error.message },
+      { success: false, message: 'Terjadi kesalahan sistem saat menyimpan pendaftaran: ' + message },
       { status: 500 }
     );
   }
