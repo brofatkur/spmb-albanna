@@ -1,4 +1,6 @@
 // InsForge Client and Sync Utilities
+import { createClient } from '@insforge/sdk';
+
 export const INSFORGE_CONFIG = {
   baseUrl: process.env.INSFORGE_BASE_URL || 'http://43.157.228.75:7130',
   anonKey: process.env.INSFORGE_ANON_KEY || 'anon_0a75c32f9a5fa623748cae8ca28764bf213bc112',
@@ -27,25 +29,17 @@ export async function insertInsForgeRecord(record: {
   file_paths?: unknown;
 }) {
   try {
-    const url = `${INSFORGE_CONFIG.baseUrl}/api/database/records/${INSFORGE_CONFIG.table}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${INSFORGE_CONFIG.anonKey}`,
-        'Content-Type': 'application/json',
-      },
-      // InsForge's database endpoint expects inserts as an array, including
-      // when only one registration is being created.
-      body: JSON.stringify([record]),
+    const insforge = createClient({
+      baseUrl: INSFORGE_CONFIG.baseUrl,
+      anonKey: INSFORGE_CONFIG.anonKey,
     });
+    const { data, error } = await insforge.database
+      .rpc('upsert_spmb_registration', { payload: record });
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('InsForge insert error:', err);
-      return { success: false, error: err };
+    if (error) {
+      console.error('InsForge insert error:', error);
+      return { success: false, error: error.message || String(error) };
     }
-
-    const data = await res.json().catch(() => ({}));
     return { success: true, data };
   } catch (err: unknown) {
     console.error('InsForge insert exception:', err);
