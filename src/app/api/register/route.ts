@@ -7,6 +7,8 @@ import {
 } from '@/lib/insforge';
 import fs from 'fs';
 import path from 'path';
+import { randomUUID } from 'crypto';
+import { validateUploadFile } from '@/lib/upload';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,9 +33,17 @@ export async function POST(req: NextRequest) {
     for (const [key, value] of formData.entries()) {
       if (value instanceof File) {
         if (value.size > 0 && value.name) {
+          const validationError = validateUploadFile(value);
+          if (validationError) {
+            return NextResponse.json(
+              { success: false, message: `${value.name}: ${validationError}` },
+              { status: 400 }
+            );
+          }
+
           const timestamp = Date.now();
           const cleanName = value.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-          const fileName = `${timestamp}_${cleanName}`;
+          const fileName = `${timestamp}_${randomUUID()}_${cleanName}`;
           const filePath = path.join(uploadDir, fileName);
 
           const bytes = await value.arrayBuffer();
