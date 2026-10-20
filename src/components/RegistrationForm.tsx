@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { JenjangConfig, FormField } from '@/data/forms';
 import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import RegionSelect, { RegionLevel } from './RegionSelect';
 
 interface Props {
   config: JenjangConfig;
@@ -11,8 +12,9 @@ interface Props {
 
 export default function RegistrationForm({ config }: Props) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [fileMap, setFileMap] = useState<Record<string, File>>({});
+  const [regionCodes, setRegionCodes] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<{
@@ -21,35 +23,75 @@ export default function RegistrationForm({ config }: Props) {
   } | null>(null);
 
   const steps = config.steps;
-  const currentStep = steps[currentStepIndex];
-
   // Helper to check conditional visibility
   const isFieldVisible = (field: FormField) => {
     const rules = config.conditionalRules;
     if (!rules) return true;
 
-    // SD Mutasi rule
-    if (rules.pindah_condition && rules.pindah_condition.targets.includes(field.name)) {
-      const parentVal = formData[rules.pindah_condition.field];
-      return parentVal === rules.pindah_condition.value;
-    }
-
-    // Wali rule
-    if (rules.wali_condition && rules.wali_condition.targets.includes(field.name)) {
-      const parentVal = formData[rules.wali_condition.field];
-      return parentVal === rules.wali_condition.value;
-    }
-
-    // SD information shown when the student has no guardian besides parents.
-    if (rules.no_wali_condition && rules.no_wali_condition.targets.includes(field.name)) {
-      const parentVal = formData[rules.no_wali_condition.field];
-      return parentVal === rules.no_wali_condition.value;
+    for (const rule of Object.values(rules) as Array<{
+      field: string;
+      value?: string;
+      values?: string[];
+      targets: string[];
+    }>) {
+      if (!rule.targets.includes(field.name)) continue;
+      const parentValue = formData[rule.field];
+      if (rule.values) return typeof parentValue === 'string' && rule.values.includes(parentValue);
+      return parentValue === rule.value;
     }
 
     return true;
   };
 
-  const handleInputChange = (fieldName: string, value: any) => {
+  const isStepVisible = (stepIndex: number) =>
+    steps[stepIndex].fields.some((field) => field.type !== 'html1' && isFieldVisible(field));
+
+  const visibleStepIndexes = steps
+    .map((_, index) => index)
+    .filter(isStepVisible);
+  const currentStep = steps[currentStepIndex];
+  const currentVisiblePosition = visibleStepIndexes.indexOf(currentStepIndex);
+
+  const getRegionMeta = (fieldName: string) => {
+    const match = fieldName.match(/^(provinsi|kabupaten|kecamatan|kelurahan)(.*)$/);
+    if (!match) return null;
+    const level = match[1] as RegionLevel;
+    const suffix = match[2];
+    const parentLevel: Partial<Record<RegionLevel, RegionLevel>> = {
+      kabupaten: 'provinsi',
+      kecamatan: 'kabupaten',
+      kelurahan: 'kecamatan',
+    };
+    const parent = parentLevel[level];
+    return {
+      level,
+      suffix,
+      parentField: parent ? `${parent}${suffix}` : undefined,
+    };
+  };
+
+  const getOrderedFields = (fields: FormField[]) => {
+    const ordered = [...fields];
+    const groups = new Map<string, Array<{ index: number; field: FormField; level: RegionLevel }>>();
+    ordered.forEach((field, index) => {
+      const meta = getRegionMeta(field.name);
+      if (!meta) return;
+      const group = groups.get(meta.suffix) || [];
+      group.push({ index, field, level: meta.level });
+      groups.set(meta.suffix, group);
+    });
+    const rank: Record<RegionLevel, number> = { provinsi: 0, kabupaten: 1, kecamatan: 2, kelurahan: 3 };
+    groups.forEach((group) => {
+      const indexes = group.map((item) => item.index).sort((a, b) => a - b);
+      const fieldsByLevel = group.sort((a, b) => rank[a.level] - rank[b.level]);
+      indexes.forEach((index, position) => {
+        ordered[index] = fieldsByLevel[position].field;
+      });
+    });
+    return ordered;
+  };
+
+  const handleInputChange = (fieldName: string, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
     if (errors[fieldName]) {
       setErrors((prev) => {
@@ -58,6 +100,48 @@ export default function RegistrationForm({ config }: Props) {
         return next;
       });
     }
+  };
+
+  const handleRegionChange = (fieldName: string, value: string, code: string) => {
+    const meta = getRegionMeta(fieldName);
+    if (!meta) return;
+    const levels: RegionLevel[] = ['provinsi', 'kabupaten', 'kecamatan', 'kelurahan'];
+    const currentRank = levels.indexOf(meta.level);
+    const childFields = levels.slice(currentRank + 1).map((level) => `${level}${meta.suffix}`);
+
+    setFormData((previous) => {
+      const next = { ...previous, [fieldName]: value };
+      childFields.forEach((child) => delete next[child]);
+      return next;
+    });
+    setRegionCodes((previous) => {
+      const next = { ...previous, [fieldName]: code };
+      childFields.forEach((child) => delete next[child]);
+      return next;
+    });
+    setErrors((previous) => {
+      const next = { ...previous };
+      delete next[fieldName];
+      childFields.forEach((child) => delete next[child]);
+      return next;
+    });
+  };
+
+  const formatDateInput = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
+
+  const isValidDate = (value: string) => {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return false;
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    const date = new Date(year, month - 1, day);
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
   };
 
   const handleCheckboxToggle = (fieldName: string, optionValue: string) => {
@@ -123,6 +207,10 @@ export default function RegistrationForm({ config }: Props) {
           }
         }
       }
+      const value = formData[f.name];
+      if (f.type === 'date' && value && !isValidDate(String(value))) {
+        stepErrors[f.name] = 'Gunakan format tanggal DD/MM/YYYY.';
+      }
     }
 
     setErrors(stepErrors);
@@ -131,16 +219,20 @@ export default function RegistrationForm({ config }: Props) {
 
   const handleNext = () => {
     if (validateCurrentStep()) {
-      if (currentStepIndex < steps.length - 1) {
-        setCurrentStepIndex((prev) => prev + 1);
+      const nextStepIndex = visibleStepIndexes.find((index) => index > currentStepIndex);
+      if (nextStepIndex !== undefined) {
+        setCurrentStepIndex(nextStepIndex);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
   };
 
   const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex((prev) => prev - 1);
+    const previousStepIndex = [...visibleStepIndexes]
+      .reverse()
+      .find((index) => index < currentStepIndex);
+    if (previousStepIndex !== undefined) {
+      setCurrentStepIndex(previousStepIndex);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -185,8 +277,9 @@ export default function RegistrationForm({ config }: Props) {
         namaLengkap: json.nama_lengkap,
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: any) {
-      alert('Terjadi kendala saat menyimpan pendaftaran: ' + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Kesalahan tidak diketahui';
+      alert('Terjadi kendala saat menyimpan pendaftaran: ' + message);
     } finally {
       setIsSubmitting(false);
     }
@@ -259,7 +352,7 @@ export default function RegistrationForm({ config }: Props) {
           <div className="hidden sm:block text-right">
             <span className="text-xs font-medium text-white/80">Langkah Pengisian</span>
             <div className="text-2xl font-bold font-mono">
-              {currentStepIndex + 1} / {steps.length}
+              {currentVisiblePosition + 1} / {visibleStepIndexes.length}
             </div>
           </div>
         </div>
@@ -268,7 +361,8 @@ export default function RegistrationForm({ config }: Props) {
       {/* Step Indicators Bar */}
       <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-3 overflow-x-auto">
         <div className="flex items-center gap-2 min-w-max">
-          {steps.map((st, idx) => {
+          {visibleStepIndexes.map((idx, visibleIndex) => {
+            const st = steps[idx];
             const isCompleted = idx < currentStepIndex;
             const isCurrent = idx === currentStepIndex;
 
@@ -296,7 +390,7 @@ export default function RegistrationForm({ config }: Props) {
                       : 'bg-slate-200 text-slate-500'
                   }`}
                 >
-                  {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : idx + 1}
+                  {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : visibleIndex + 1}
                 </span>
                 <span>{st.label}</span>
               </button>
@@ -310,7 +404,7 @@ export default function RegistrationForm({ config }: Props) {
         <div className="mb-8 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">
-              {currentStepIndex + 1}
+              {currentVisiblePosition + 1}
             </span>
             <h2 className="text-xl md:text-2xl font-bold text-slate-800">
               {currentStep.label}
@@ -323,12 +417,13 @@ export default function RegistrationForm({ config }: Props) {
 
         {/* Fields Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {currentStep.fields.map((field) => {
+          {getOrderedFields(currentStep.fields).map((field) => {
             if (!isFieldVisible(field)) return null;
 
             const isFullWidth = field.width === 100 || !field.width;
             const colSpanClass = isFullWidth ? 'md:col-span-2' : 'md:col-span-1';
             const fieldError = errors[field.name];
+            const regionMeta = getRegionMeta(field.name);
 
             if (field.type === 'html1') {
               return (
@@ -355,7 +450,18 @@ export default function RegistrationForm({ config }: Props) {
                 )}
 
                 {/* SELECT DROPDOWN */}
-                {field.type === 'select' && (
+                {regionMeta && (
+                  <RegionSelect
+                    level={regionMeta.level}
+                    parentCode={regionMeta.parentField ? regionCodes[regionMeta.parentField] : undefined}
+                    value={String(formData[field.name] || '')}
+                    selectedCode={regionCodes[field.name]}
+                    hasError={Boolean(fieldError)}
+                    onChange={(name, code) => handleRegionChange(field.name, name, code)}
+                  />
+                )}
+
+                {!regionMeta && field.type === 'select' && (
                   <select
                     value={formData[field.name] || ''}
                     onChange={(e) => handleInputChange(field.name, e.target.value)}
@@ -488,13 +594,11 @@ export default function RegistrationForm({ config }: Props) {
                 )}
 
                 {/* STANDARD INPUTS: TEXT, NUMBER, DATE, TEL, EMAIL */}
-                {!['select', 'radio', 'checkbox', 'upload', 'textarea', 'html1'].includes(field.type) && (
+                {!regionMeta && !['select', 'radio', 'checkbox', 'upload', 'textarea', 'html1'].includes(field.type) && (
                   <input
                     type={
                       field.type === 'number'
                         ? 'number'
-                        : field.type === 'date'
-                        ? 'date'
                         : field.type === 'tel'
                         ? 'tel'
                         : field.type === 'email'
@@ -502,8 +606,15 @@ export default function RegistrationForm({ config }: Props) {
                         : 'text'
                     }
                     value={formData[field.name] || ''}
-                    placeholder={field.placeholder || ''}
-                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                    placeholder={field.type === 'date' ? 'DD/MM/YYYY' : field.placeholder || ''}
+                    inputMode={field.type === 'date' ? 'numeric' : undefined}
+                    maxLength={field.type === 'date' ? 10 : undefined}
+                    onChange={(e) =>
+                      handleInputChange(
+                        field.name,
+                        field.type === 'date' ? formatDateInput(e.target.value) : e.target.value
+                      )
+                    }
                     className={`w-full px-4 py-2.5 rounded-xl border bg-white text-sm text-slate-800 transition focus:outline-none focus:ring-2 ${
                       fieldError
                         ? 'border-rose-400 focus:ring-rose-200'
@@ -525,7 +636,7 @@ export default function RegistrationForm({ config }: Props) {
 
         {/* Step Navigation Buttons */}
         <div className="mt-12 pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
-          {currentStepIndex > 0 ? (
+          {visibleStepIndexes.some((index) => index < currentStepIndex) ? (
             <button
               type="button"
               onClick={handlePrevious}
@@ -538,7 +649,7 @@ export default function RegistrationForm({ config }: Props) {
             <div />
           )}
 
-          {currentStepIndex < steps.length - 1 ? (
+          {visibleStepIndexes.some((index) => index > currentStepIndex) ? (
             <button
               type="button"
               onClick={handleNext}
