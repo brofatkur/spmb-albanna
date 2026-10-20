@@ -53,7 +53,8 @@ export async function insertInsForgeRecord(record: {
   }
 }
 
-export async function createGoogleSheetRegistration(data: {
+export async function forwardToGoogleSheet(data: {
+  nomor_pendaftaran: string;
   jenjang: string;
   nama_lengkap: string;
   nama_sekolah_asal?: string;
@@ -68,50 +69,19 @@ export async function createGoogleSheetRegistration(data: {
   [key: string]: any;
 }) {
   const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-  const webhookToken = process.env.GOOGLE_SHEET_TOKEN;
-
   if (!webhookUrl) {
-    return { configured: false, success: false as const, reason: 'GOOGLE_SHEET_WEBHOOK_URL is not set' };
+    return { sent: false, reason: 'GOOGLE_SHEET_WEBHOOK_URL is not set' };
   }
 
   try {
-    const body = new URLSearchParams();
-    Object.entries({ ...data, key: webhookToken || '' }).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-      body.set(key, Array.isArray(value) ? value.join(', ') : String(value));
-    });
-
     const res = await fetch(webhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body,
-      redirect: 'follow',
-      signal: AbortSignal.timeout(25000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     });
-
-    const payload = await res.json().catch(() => null) as {
-      result?: string;
-      message?: string;
-      no_pendaftaran?: string;
-      jenjang?: string;
-    } | null;
-
-    if (!res.ok || payload?.result !== 'success' || !payload.no_pendaftaran) {
-      return {
-        configured: true,
-        success: false as const,
-        error: payload?.message || `Google Sheet webhook returned HTTP ${res.status}`,
-      };
-    }
-
-    return {
-      configured: true,
-      success: true as const,
-      nomor_pendaftaran: String(payload.no_pendaftaran),
-      jenjang: payload.jenjang,
-    };
+    return { sent: true, status: res.status };
   } catch (err: any) {
     console.error('Google Sheet Webhook error:', err);
-    return { configured: true, success: false as const, error: err.message };
+    return { sent: false, error: err.message };
   }
 }
