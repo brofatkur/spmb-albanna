@@ -127,11 +127,14 @@ export default function RegistrationForm({ config }: Props) {
     });
   };
 
-  const formatDateInput = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 8);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  const dateToDisplayValue = (isoValue: string) => {
+    const match = isoValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return match ? `${match[3]}/${match[2]}/${match[1]}` : isoValue;
+  };
+
+  const dateToInputValue = (displayValue: string) => {
+    const match = displayValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return match ? `${match[3]}-${match[2]}-${match[1]}` : '';
   };
 
   const isValidDate = (value: string) => {
@@ -597,7 +600,9 @@ export default function RegistrationForm({ config }: Props) {
                 {!regionMeta && !['select', 'radio', 'checkbox', 'upload', 'textarea', 'html1'].includes(field.type) && (
                   <input
                     type={
-                      field.type === 'number'
+                      field.type === 'date'
+                        ? 'date'
+                        : field.type === 'number'
                         ? 'number'
                         : field.type === 'tel'
                         ? 'tel'
@@ -605,14 +610,17 @@ export default function RegistrationForm({ config }: Props) {
                         ? 'email'
                         : 'text'
                     }
-                    value={formData[field.name] || ''}
-                    placeholder={field.type === 'date' ? 'DD/MM/YYYY' : field.placeholder || ''}
-                    inputMode={field.type === 'date' ? 'numeric' : undefined}
-                    maxLength={field.type === 'date' ? 10 : undefined}
+                    value={
+                      field.type === 'date'
+                        ? dateToInputValue(String(formData[field.name] || ''))
+                        : formData[field.name] || ''
+                    }
+                    placeholder={field.placeholder || ''}
+                    max={field.type === 'date' ? new Date().toISOString().split('T')[0] : undefined}
                     onChange={(e) =>
                       handleInputChange(
                         field.name,
-                        field.type === 'date' ? formatDateInput(e.target.value) : e.target.value
+                        field.type === 'date' ? dateToDisplayValue(e.target.value) : e.target.value
                       )
                     }
                     className={`w-full px-4 py-2.5 rounded-xl border bg-white text-sm text-slate-800 transition focus:outline-none focus:ring-2 ${
