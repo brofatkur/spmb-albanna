@@ -23,8 +23,8 @@ export async function insertInsForgeRecord(record: {
   email?: string | null;
   status?: string;
   catatan?: string;
-  form_data?: any;
-  file_paths?: any;
+  form_data?: unknown;
+  file_paths?: unknown;
 }) {
   try {
     const url = `${INSFORGE_CONFIG.baseUrl}/api/database/records/${INSFORGE_CONFIG.table}`;
@@ -47,9 +47,9 @@ export async function insertInsForgeRecord(record: {
 
     const data = await res.json().catch(() => ({}));
     return { success: true, data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('InsForge insert exception:', err);
-    return { success: false, error: err.message };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -65,7 +65,7 @@ export async function createGoogleSheetRegistration(data: {
   handphone_ibu?: string;
   status?: string;
   created_at?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }) {
   const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
   const webhookToken = process.env.GOOGLE_SHEET_TOKEN;
@@ -110,8 +110,64 @@ export async function createGoogleSheetRegistration(data: {
       nomor_pendaftaran: String(payload.no_pendaftaran),
       jenjang: payload.jenjang,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Google Sheet Webhook error:', err);
-    return { configured: true, success: false as const, error: err.message };
+    return { configured: true, success: false as const, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function syncGoogleDriveRegistrationPdf(data: {
+  nomor_pendaftaran: string;
+  jenjang: string;
+  nama_lengkap: string;
+  pdf_url: string;
+}) {
+  const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
+  const webhookToken = process.env.GOOGLE_SHEET_TOKEN;
+
+  if (!webhookUrl) {
+    return { configured: false, success: false as const, reason: 'GOOGLE_SHEET_WEBHOOK_URL is not set' };
+  }
+
+  try {
+    const body = new URLSearchParams({
+      key: webhookToken || '',
+      action: 'sync_pdf',
+      nomor_pendaftaran: data.nomor_pendaftaran,
+      jenjang: data.jenjang,
+      nama_lengkap: data.nama_lengkap,
+      pdf_url: data.pdf_url,
+    });
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30000),
+    });
+    const payload = await res.json().catch(() => null) as {
+      result?: string;
+      message?: string;
+      drive_folder_url?: string;
+      pdf_drive_url?: string;
+    } | null;
+
+    if (!res.ok || payload?.result !== 'success') {
+      return {
+        configured: true,
+        success: false as const,
+        error: payload?.message || `Google Drive sync returned HTTP ${res.status}`,
+      };
+    }
+
+    return {
+      configured: true,
+      success: true as const,
+      drive_folder_url: payload.drive_folder_url,
+      pdf_drive_url: payload.pdf_drive_url,
+    };
+  } catch (err: unknown) {
+    console.error('Google Drive PDF sync error:', err);
+    return { configured: true, success: false as const, error: err instanceof Error ? err.message : String(err) };
   }
 }
