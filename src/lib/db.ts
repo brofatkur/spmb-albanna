@@ -49,16 +49,6 @@ db.exec(`
   );
 `);
 
-// Insert default admin if not exists (username: admin, pass: albanna2026)
-const existingAdmin = db.prepare('SELECT id FROM admin_users WHERE username = ?').get('admin');
-if (!existingAdmin) {
-  // Using simple secure hash or standard credential
-  db.prepare(`
-    INSERT INTO admin_users (username, password_hash, name, role)
-    VALUES (?, ?, ?, ?)
-  `).run('admin', 'albanna2026', 'Administrator SPMB Albanna', 'superadmin');
-}
-
 export interface RegistrationRecord {
   id: number;
   nomor_pendaftaran: string;
