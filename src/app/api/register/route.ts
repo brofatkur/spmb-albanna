@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db, { generateRegistrationNumber } from '@/lib/db';
-import { insertInsForgeRecord, forwardToGoogleSheet } from '@/lib/insforge';
+import db from '@/lib/db';
+import { createGoogleSheetRegistration, insertInsForgeRecord } from '@/lib/insforge';
 import fs from 'fs';
 import path from 'path';
 
@@ -129,7 +129,50 @@ export async function POST(req: NextRequest) {
       dataObj['email'] ||
       null;
 
-    const nomorPendaftaran = generateRegistrationNumber(jenjang);
+    // Keep the existing global registration sequence in Google Sheets as the
+    // single source of truth while the old Elementor form is still active.
+    // The current counter is shared across PAUD, SD, SMP, and SMA.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+    const sheetPayload = Object.fromEntries(
+      Object.entries(dataObj).map(([key, value]) => {
+        if (typeof value === 'string' && value.startsWith('/uploads/')) {
+          return [key, new URL(value, appUrl).toString()];
+        }
+        return [key, value];
+      })
+    );
+
+    const sheetResult = await createGoogleSheetRegistration({
+      ...sheetPayload,
+      jenjang: jenjang.toUpperCase(),
+      nama_lengkap: String(namaLengkap),
+      nama_sekolah_asal: sekolahAsal || '-',
+      nisn: nisn || '-',
+      alamat_domisili: alamatDomisili || '-',
+      nama_ayah: namaAyah || '-',
+      handphone_ayah: handphoneAyah || '-',
+      nama_ibu: namaIbu || '-',
+      handphone_ibu: handphoneIbu || '-',
+      status: 'Menunggu Verifikasi',
+      created_at: new Date().toISOString(),
+    });
+
+    if (!sheetResult.success) {
+      Object.values(filePaths).forEach((publicUrl) => {
+        const uploadedFile = path.join(process.cwd(), 'public', publicUrl);
+        if (fs.existsSync(uploadedFile)) fs.unlinkSync(uploadedFile);
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Nomor pendaftaran belum dapat dibuat. Silakan coba kembali beberapa saat lagi.',
+        },
+        { status: sheetResult.configured ? 502 : 503 }
+      );
+    }
+
+    const nomorPendaftaran = sheetResult.nomor_pendaftaran;
 
     // 1. Save to local SQLite
     const stmt = db.prepare(`
@@ -190,22 +233,6 @@ export async function POST(req: NextRequest) {
     insertInsForgeRecord(insforgePayload).catch((e) =>
       console.error('Failed to sync to InsForge:', e)
     );
-
-    // 3. Trigger Google Sheet webhook sync if configured
-    forwardToGoogleSheet({
-      nomor_pendaftaran: nomorPendaftaran,
-      jenjang: jenjang.toUpperCase(),
-      nama_lengkap: String(namaLengkap),
-      nama_sekolah_asal: sekolahAsal || '-',
-      nisn: nisn || '-',
-      alamat_domisili: alamatDomisili || '-',
-      nama_ayah: namaAyah || '-',
-      handphone_ayah: handphoneAyah || '-',
-      nama_ibu: namaIbu || '-',
-      handphone_ibu: handphoneIbu || '-',
-      status: 'Menunggu Verifikasi',
-      created_at: new Date().toISOString(),
-    }).catch((e) => console.error('Failed to sync to Google Sheet webhook:', e));
 
     return NextResponse.json({
       success: true,
