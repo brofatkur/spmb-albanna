@@ -227,10 +227,12 @@ export async function POST(req: NextRequest) {
       file_paths: filePaths,
     };
 
-    // Insert async into InsForge
-    insertInsForgeRecord(insforgePayload).catch((e) =>
-      console.error('Failed to sync to InsForge:', e)
-    );
+    // Complete the InsForge write before returning the registration result so
+    // the record is available to the operational database immediately.
+    const insforgeResult = await insertInsForgeRecord(insforgePayload);
+    if (!insforgeResult.success) {
+      console.error('Failed to sync to InsForge:', insforgeResult.error);
+    }
 
     // The Apps Script webhook has already copied uploaded attachments to the
     // student's Drive folder. After the local record exists, ask it to fetch
