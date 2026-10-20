@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { hashPassword, isHashedPassword, verifyPassword } from '@/lib/password';
 import { cookies } from 'next/headers';
+
+interface AdminUser {
+  id: number;
+  username: string;
+  password_hash: string;
+  name: string;
+  role: string;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,13 +26,18 @@ export async function POST(req: NextRequest) {
       SELECT id, username, password_hash, name, role 
       FROM admin_users 
       WHERE username = ?
-    `).get(username) as any;
+    `).get(username) as AdminUser | undefined;
 
-    if (!admin || admin.password_hash !== password) {
+    if (!admin || !verifyPassword(password, admin.password_hash)) {
       return NextResponse.json(
         { success: false, message: 'Username atau password salah.' },
         { status: 401 }
       );
+    }
+
+    if (!isHashedPassword(admin.password_hash)) {
+      db.prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?')
+        .run(hashPassword(password), admin.id);
     }
 
     const sessionPayload = JSON.stringify({
@@ -52,9 +66,10 @@ export async function POST(req: NextRequest) {
         role: admin.role,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Kesalahan tidak diketahui';
     return NextResponse.json(
-      { success: false, message: 'Terjadi kesalahan login: ' + error.message },
+      { success: false, message: 'Terjadi kesalahan login: ' + message },
       { status: 500 }
     );
   }
