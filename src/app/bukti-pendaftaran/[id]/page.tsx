@@ -9,6 +9,19 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+interface RegistrationRecord {
+  id: number;
+  nomor_pendaftaran: string;
+  jenjang: string;
+  nama_lengkap?: string;
+  nisn?: string;
+  nama_ayah?: string;
+  no_handphone?: string;
+  form_data?: string;
+  created_at?: string;
+  status?: string;
+}
+
 export default async function BuktiPendaftaranPage({ params }: Props) {
   const { id } = await params;
 
@@ -17,15 +30,15 @@ export default async function BuktiPendaftaranPage({ params }: Props) {
     SELECT * FROM registrations 
     WHERE LOWER(nomor_pendaftaran) = LOWER(?) OR id = ?
     LIMIT 1
-  `).get(id, id) as any;
+  `).get(id, id) as RegistrationRecord | undefined;
 
   if (!record) {
     notFound();
   }
 
-  let formData: Record<string, any> = {};
+  let formData: Record<string, string | number | null | undefined> = {};
   try {
-    formData = JSON.parse(record.form_data || '{}');
+    formData = JSON.parse(record.form_data || '{}') as Record<string, string | number | null | undefined>;
   } catch {}
 
   const jenjang = (record.jenjang || '').toLowerCase();
@@ -109,7 +122,7 @@ export default async function BuktiPendaftaranPage({ params }: Props) {
           >
             Cek Status Pendaftaran
           </Link>
-          <PrintButton />
+          <PrintButton registrationId={record.nomor_pendaftaran} />
         </div>
       </div>
 
@@ -121,9 +134,9 @@ export default async function BuktiPendaftaranPage({ params }: Props) {
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo-circle.png"
+              src="/logo-albanna-terbaru.webp"
               alt="Logo Sekolah Albanna"
-              className="w-24 h-24 object-contain"
+              className="w-52 h-24 object-contain object-left"
             />
           </div>
 
