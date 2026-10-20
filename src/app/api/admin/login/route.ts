@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { createAdminSession } from '@/lib/admin-session';
 import { hashPassword, isHashedPassword, verifyPassword } from '@/lib/password';
 import { cookies } from 'next/headers';
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
         .run(hashPassword(password), admin.id);
     }
 
-    const sessionPayload = JSON.stringify({
+    const sessionPayload = createAdminSession({
       id: admin.id,
       username: admin.username,
       name: admin.name,
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
     });
 
     const cookieStore = await cookies();
-    cookieStore.set('admin_session', Buffer.from(sessionPayload).toString('base64'), {
+    cookieStore.set('admin_session', sessionPayload, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
