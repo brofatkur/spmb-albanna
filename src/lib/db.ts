@@ -1,0 +1,93 @@
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs';
+
+const dbDirectory = path.join(process.cwd(), 'data');
+if (!fs.existsSync(dbDirectory)) {
+  fs.mkdirSync(dbDirectory, { recursive: true });
+}
+
+const dbPath = path.join(dbDirectory, 'spmb.db');
+const db = new Database(dbPath);
+
+// Enable WAL mode for high concurrency
+db.pragma('journal_mode = WAL');
+
+// Initialize tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS registrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nomor_pendaftaran TEXT UNIQUE NOT NULL,
+    jenjang TEXT NOT NULL,
+    nama_lengkap TEXT NOT NULL,
+    nisn TEXT,
+    nik TEXT,
+    jenis_kelamin TEXT,
+    nama_ayah TEXT,
+    no_handphone TEXT,
+    email TEXT,
+    form_data TEXT NOT NULL,
+    file_paths TEXT,
+    status TEXT DEFAULT 'Menunggu Verifikasi',
+    catatan TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS admin_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT DEFAULT 'admin',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+`);
+
+// Insert default admin if not exists (username: admin, pass: albanna2026)
+const existingAdmin = db.prepare('SELECT id FROM admin_users WHERE username = ?').get('admin');
+if (!existingAdmin) {
+  // Using simple secure hash or standard credential
+  db.prepare(`
+    INSERT INTO admin_users (username, password_hash, name, role)
+    VALUES (?, ?, ?, ?)
+  `).run('admin', 'albanna2026', 'Administrator SPMB Albanna', 'superadmin');
+}
+
+export interface RegistrationRecord {
+  id: number;
+  nomor_pendaftaran: string;
+  jenjang: 'paud' | 'sd' | 'smp' | 'sma';
+  nama_lengkap: string;
+  nisn: string | null;
+  nik: string | null;
+  jenis_kelamin: string | null;
+  nama_ayah: string | null;
+  no_handphone: string | null;
+  email: string | null;
+  form_data: string;
+  file_paths: string | null;
+  status: string;
+  catatan: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function generateRegistrationNumber(jenjang: string): string {
+  const year = new Date().getFullYear();
+  const prefix = `SPMB-${year}-${jenjang.toUpperCase()}`;
+  
+  const countRow = db.prepare(`
+    SELECT COUNT(*) as total FROM registrations WHERE jenjang = ?
+  `).get(jenjang) as { total: number };
+
+  const nextSeq = (countRow.total + 1).toString().padStart(4, '0');
+  return `${prefix}-${nextSeq}`;
+}
+
+export default db;
