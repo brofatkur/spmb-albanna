@@ -25,12 +25,19 @@ interface RegistrationRecord {
 export default async function BuktiPendaftaranPage({ params }: Props) {
   const { id } = await params;
 
-  // Search by registration number or id
-  const record = db.prepare(`
-    SELECT * FROM registrations 
-    WHERE LOWER(nomor_pendaftaran) = LOWER(?) OR id = ?
+  // Historical imports can make a public registration number collide with a
+  // different row's internal SQLite id. Always resolve the public number first.
+  const recordByNumber = db.prepare(`
+    SELECT * FROM registrations
+    WHERE LOWER(nomor_pendaftaran) = LOWER(?)
     LIMIT 1
-  `).get(id, id) as RegistrationRecord | undefined;
+  `).get(id) as RegistrationRecord | undefined;
+
+  const record = recordByNumber || db.prepare(`
+    SELECT * FROM registrations
+    WHERE CAST(id AS TEXT) = ?
+    LIMIT 1
+  `).get(id) as RegistrationRecord | undefined;
 
   if (!record) {
     notFound();
