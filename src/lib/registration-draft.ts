@@ -6,6 +6,7 @@ export type RegistrationDraft = {
   regionCodes: Record<string, string>;
   currentStepIndex: number;
   updatedAt: number;
+  submissionId?: string;
 };
 
 const DATABASE_NAME = 'spmb-albanna-local-drafts';
@@ -70,6 +71,7 @@ export async function saveRegistrationDraft(id: string, draft: RegistrationDraft
     regionCodes: draft.regionCodes,
     currentStepIndex: draft.currentStepIndex,
     updatedAt: draft.updatedAt,
+    submissionId: draft.submissionId,
   };
   localStorage.setItem(TEXT_KEY_PREFIX + id, JSON.stringify(textDraft));
 }

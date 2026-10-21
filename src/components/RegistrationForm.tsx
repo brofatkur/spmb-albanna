@@ -16,6 +16,13 @@ interface Props {
   config: JenjangConfig;
 }
 
+const createSubmissionId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `spmb-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
 export default function RegistrationForm({ config }: Props) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
@@ -24,6 +31,7 @@ export default function RegistrationForm({ config }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('');
+  const [submissionId, setSubmissionId] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState<{
     nomorPendaftaran: string;
     namaLengkap: string;
@@ -49,6 +57,9 @@ export default function RegistrationForm({ config }: Props) {
         );
         setDraftUpdatedAt(draft.updatedAt);
         setDraftRestored(true);
+        setSubmissionId(draft.submissionId || createSubmissionId());
+      } else {
+        setSubmissionId(createSubmissionId());
       }
       setDraftReady(true);
     });
@@ -67,13 +78,14 @@ export default function RegistrationForm({ config }: Props) {
         regionCodes,
         currentStepIndex,
         updatedAt,
+        submissionId,
       }).catch(() => {
         // The form remains usable when browser storage is unavailable.
       });
       setDraftUpdatedAt(updatedAt);
     }, 700);
     return () => window.clearTimeout(timeout);
-  }, [config.id, currentStepIndex, draftReady, fileMap, formData, regionCodes, submitSuccess]);
+  }, [config.id, currentStepIndex, draftReady, fileMap, formData, regionCodes, submissionId, submitSuccess]);
 
   const discardDraft = async () => {
     if (!window.confirm('Hapus seluruh draf isian pada perangkat ini?')) return;
@@ -85,6 +97,7 @@ export default function RegistrationForm({ config }: Props) {
     setCurrentStepIndex(0);
     setDraftRestored(false);
     setDraftUpdatedAt(null);
+    setSubmissionId(createSubmissionId());
   };
   // Helper to check conditional visibility
   const isFieldVisible = (field: FormField) => {
@@ -314,20 +327,43 @@ export default function RegistrationForm({ config }: Props) {
       const files = Object.entries(fileMap);
       for (let index = 0; index < files.length; index += 1) {
         const [key, file] = files[index];
-        setSubmitStatus(`Mengunggah lampiran ${index + 1} dari ${files.length}...`);
-        const uploadResponse = await fetch(`/api/upload?jenjang=${encodeURIComponent(config.id)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': file.type || 'application/octet-stream',
-            'X-File-Name': encodeURIComponent(file.name),
-          },
-          body: file,
-        });
-        const uploadResult = await uploadResponse.json().catch(() => null);
-        if (!uploadResponse.ok || !uploadResult?.success || !uploadResult?.url) {
-          throw new Error(uploadResult?.message || `Lampiran ${file.name} gagal diunggah.`);
+        let uploadedUrl = '';
+        let lastMessage = `Lampiran ${file.name} gagal diunggah.`;
+
+        for (let attempt = 1; attempt <= 3 && !uploadedUrl; attempt += 1) {
+          setSubmitStatus(
+            `Mengunggah lampiran ${index + 1} dari ${files.length}${attempt > 1 ? ` (percobaan ${attempt})` : ''}...`
+          );
+          try {
+            const uploadResponse = await fetch(`/api/upload?jenjang=${encodeURIComponent(config.id)}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': file.type || 'application/octet-stream',
+                'X-File-Name': encodeURIComponent(file.name),
+              },
+              body: file,
+            });
+            const uploadResult = await uploadResponse.json().catch(() => null);
+            if (uploadResponse.ok && uploadResult?.success && uploadResult?.url) {
+              uploadedUrl = uploadResult.url;
+              break;
+            }
+
+            lastMessage = uploadResult?.message || lastMessage;
+            if (uploadResponse.status < 500) break;
+          } catch (error) {
+            lastMessage = error instanceof Error ? error.message : lastMessage;
+          }
+
+          if (attempt < 3) {
+            await new Promise((resolve) => window.setTimeout(resolve, attempt * 1200));
+          }
         }
-        uploadedPaths[key] = uploadResult.url;
+
+        if (!uploadedUrl) {
+          throw new Error(`${lastMessage} Isian tetap tersimpan; silakan coba kirim lagi.`);
+        }
+        uploadedPaths[key] = uploadedUrl;
       }
 
       setSubmitStatus('Menyimpan pendaftaran...');
@@ -336,6 +372,7 @@ export default function RegistrationForm({ config }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jenjang: config.id,
+          submissionId: submissionId || createSubmissionId(),
           formData,
           filePaths: uploadedPaths,
         }),

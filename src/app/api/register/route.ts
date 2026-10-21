@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get('content-type') || '';
     let jenjang = '';
+    let submissionId = '';
     let multipartFormData: FormData | null = null;
     const dataObj: Record<string, string | string[]> = {};
     const filePaths: Record<string, string> = {};
@@ -21,10 +22,12 @@ export async function POST(req: NextRequest) {
     if (contentType.includes('application/json')) {
       const payload = (await req.json()) as {
         jenjang?: unknown;
+        submissionId?: unknown;
         formData?: unknown;
         filePaths?: unknown;
       };
       jenjang = typeof payload.jenjang === 'string' ? payload.jenjang.toLowerCase() : '';
+      submissionId = typeof payload.submissionId === 'string' ? payload.submissionId.trim() : '';
 
       if (payload.formData && typeof payload.formData === 'object' && !Array.isArray(payload.formData)) {
         for (const [key, value] of Object.entries(payload.formData)) {
@@ -45,6 +48,7 @@ export async function POST(req: NextRequest) {
     } else {
       multipartFormData = await req.formData();
       jenjang = String(multipartFormData.get('jenjang') || '').toLowerCase();
+      submissionId = String(multipartFormData.get('submissionId') || '').trim();
     }
 
     if (!jenjang || !['paud', 'sd', 'smp', 'sma'].includes(jenjang)) {
@@ -52,6 +56,38 @@ export async function POST(req: NextRequest) {
         { success: false, message: 'Jenjang pendidikan tidak valid.' },
         { status: 400 }
       );
+    }
+
+    if (submissionId && !/^[a-zA-Z0-9_-]{16,128}$/.test(submissionId)) {
+      return NextResponse.json(
+        { success: false, message: 'Identitas pengiriman tidak valid. Muat ulang formulir lalu coba kembali.' },
+        { status: 400 }
+      );
+    }
+
+    if (submissionId) {
+      const existing = db.prepare(`
+        SELECT nomor_pendaftaran, nama_lengkap, jenjang
+        FROM registrations
+        WHERE submission_id = ?
+        LIMIT 1
+      `).get(submissionId) as {
+        nomor_pendaftaran: string;
+        nama_lengkap: string;
+        jenjang: string;
+      } | undefined;
+
+      if (existing) {
+        return NextResponse.json({
+          success: true,
+          duplicate: true,
+          nomor_pendaftaran: existing.nomor_pendaftaran,
+          nama_lengkap: existing.nama_lengkap,
+          jenjang: existing.jenjang.toUpperCase(),
+          message: 'Pendaftaran ini sudah tersimpan sebelumnya.',
+        });
+      }
+      dataObj.client_submission_id = submissionId;
     }
 
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', jenjang);
@@ -217,6 +253,7 @@ export async function POST(req: NextRequest) {
     // 1. Save to local SQLite
     const stmt = db.prepare(`
       INSERT INTO registrations (
+        submission_id,
         nomor_pendaftaran,
         jenjang,
         nama_lengkap,
@@ -229,10 +266,11 @@ export async function POST(req: NextRequest) {
         form_data,
         file_paths,
         status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Menunggu Verifikasi')
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Menunggu Verifikasi')
     `);
 
     stmt.run(
+      submissionId || null,
       nomorPendaftaran,
       jenjang,
       String(namaLengkap),
@@ -279,15 +317,18 @@ export async function POST(req: NextRequest) {
     // The Apps Script webhook has already copied uploaded attachments to the
     // student's Drive folder. After the local record exists, ask it to fetch
     // and store the generated registration receipt in the same folder.
-    const pdfSyncResult = await syncGoogleDriveRegistrationPdf({
+    void syncGoogleDriveRegistrationPdf({
       nomor_pendaftaran: nomorPendaftaran,
       jenjang: jenjang.toUpperCase(),
       nama_lengkap: String(namaLengkap),
       pdf_url: `${appUrl}/api/registrations/${encodeURIComponent(nomorPendaftaran)}/pdf`,
+    }).then((pdfSyncResult) => {
+      if (!pdfSyncResult.success) {
+        console.error('Failed to sync registration PDF to Google Drive:', pdfSyncResult);
+      }
+    }).catch((error) => {
+      console.error('Failed to sync registration PDF to Google Drive:', error);
     });
-    if (!pdfSyncResult.success) {
-      console.error('Failed to sync registration PDF to Google Drive:', pdfSyncResult);
-    }
 
     return NextResponse.json({
       success: true,
