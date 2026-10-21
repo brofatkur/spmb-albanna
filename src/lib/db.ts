@@ -59,6 +59,16 @@ db.exec(`
   );
 `);
 
+const registrationColumns = db.prepare(`PRAGMA table_info(registrations)`).all() as Array<{ name: string }>;
+if (!registrationColumns.some((column) => column.name === 'submission_id')) {
+  db.exec(`ALTER TABLE registrations ADD COLUMN submission_id TEXT`);
+}
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS registrations_submission_id_unique
+  ON registrations(submission_id)
+  WHERE submission_id IS NOT NULL;
+`);
+
 export interface RegistrationRecord {
   id: number;
   nomor_pendaftaran: string;
@@ -76,6 +86,7 @@ export interface RegistrationRecord {
   catatan: string | null;
   created_at: string;
   updated_at: string;
+  submission_id: string | null;
 }
 
 export function generateRegistrationNumber(jenjang: string): string {

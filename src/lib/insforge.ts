@@ -80,7 +80,10 @@ export async function createGoogleSheetRegistration(data: {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
       body,
       redirect: 'follow',
-      signal: AbortSignal.timeout(25000),
+      // Apps Script may need extra time to copy several attachments to Drive.
+      // Keep this longer than the former 25-second window to avoid reporting
+      // a failure while Google is still completing a valid registration.
+      signal: AbortSignal.timeout(90000),
     });
 
     const payload = await res.json().catch(() => null) as {
