@@ -28,36 +28,6 @@ function openDatabase(): Promise<IDBDatabase> {
   });
 }
 
-async function loadFiles(id: string): Promise<Record<string, File>> {
-  if (!('indexedDB' in window)) return {};
-  const database = await openDatabase();
-  try {
-    return await new Promise((resolve, reject) => {
-      const transaction = database.transaction(STORE_NAME, 'readonly');
-      const request = transaction.objectStore(STORE_NAME).get(id);
-      request.onsuccess = () => resolve(request.result?.fileMap || {});
-      request.onerror = () => reject(request.error);
-    });
-  } finally {
-    database.close();
-  }
-}
-
-async function saveFiles(id: string, fileMap: Record<string, File>, updatedAt: number) {
-  if (!('indexedDB' in window)) return;
-  const database = await openDatabase();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(STORE_NAME, 'readwrite');
-      transaction.objectStore(STORE_NAME).put({ id, fileMap, updatedAt });
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
-  } finally {
-    database.close();
-  }
-}
-
 async function clearFiles(id: string) {
   if (!('indexedDB' in window)) return;
   const database = await openDatabase();
@@ -84,14 +54,10 @@ export async function loadRegistrationDraft(id: string): Promise<RegistrationDra
       return null;
     }
 
-    let fileMap: Record<string, File> = {};
-    try {
-      fileMap = await loadFiles(id);
-    } catch {
-      // Text fields remain recoverable even when browser file storage is unavailable.
-    }
-
-    return { ...textDraft, fileMap };
+    // Persisting browser File objects can leave unreadable file handles on
+    // iOS after the page is closed. Restore text only and ask for files again.
+    void clearFiles(id).catch(() => undefined);
+    return { ...textDraft, fileMap: {} };
   } catch {
     await clearRegistrationDraft(id);
     return null;
@@ -99,13 +65,13 @@ export async function loadRegistrationDraft(id: string): Promise<RegistrationDra
 }
 
 export async function saveRegistrationDraft(id: string, draft: RegistrationDraft) {
-  const { fileMap, ...textDraft } = draft;
+  const textDraft: Omit<RegistrationDraft, 'fileMap'> = {
+    formData: draft.formData,
+    regionCodes: draft.regionCodes,
+    currentStepIndex: draft.currentStepIndex,
+    updatedAt: draft.updatedAt,
+  };
   localStorage.setItem(TEXT_KEY_PREFIX + id, JSON.stringify(textDraft));
-  try {
-    await saveFiles(id, fileMap, draft.updatedAt);
-  } catch {
-    // Keep the text draft even if the browser refuses file persistence.
-  }
 }
 
 export async function clearRegistrationDraft(id: string) {

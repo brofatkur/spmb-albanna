@@ -12,8 +12,40 @@ import { validateUploadFile } from '@/lib/upload';
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const jenjang = (formData.get('jenjang') as string)?.toLowerCase();
+    const contentType = req.headers.get('content-type') || '';
+    let jenjang = '';
+    let multipartFormData: FormData | null = null;
+    const dataObj: Record<string, string | string[]> = {};
+    const filePaths: Record<string, string> = {};
+
+    if (contentType.includes('application/json')) {
+      const payload = (await req.json()) as {
+        jenjang?: unknown;
+        formData?: unknown;
+        filePaths?: unknown;
+      };
+      jenjang = typeof payload.jenjang === 'string' ? payload.jenjang.toLowerCase() : '';
+
+      if (payload.formData && typeof payload.formData === 'object' && !Array.isArray(payload.formData)) {
+        for (const [key, value] of Object.entries(payload.formData)) {
+          if (typeof value === 'string') dataObj[key] = value;
+          if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+            dataObj[key] = value as string[];
+          }
+        }
+      }
+
+      if (payload.filePaths && typeof payload.filePaths === 'object' && !Array.isArray(payload.filePaths)) {
+        for (const [key, value] of Object.entries(payload.filePaths)) {
+          if (typeof value !== 'string') continue;
+          filePaths[key] = value;
+          dataObj[key] = value;
+        }
+      }
+    } else {
+      multipartFormData = await req.formData();
+      jenjang = String(multipartFormData.get('jenjang') || '').toLowerCase();
+    }
 
     if (!jenjang || !['paud', 'sd', 'smp', 'sma'].includes(jenjang)) {
       return NextResponse.json(
@@ -27,40 +59,50 @@ export async function POST(req: NextRequest) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const dataObj: Record<string, string | string[]> = {};
-    const filePaths: Record<string, string> = {};
+    if (multipartFormData) {
+      for (const [key, value] of multipartFormData.entries()) {
+        if (value instanceof File) {
+          if (value.size > 0 && value.name) {
+            const validationError = validateUploadFile(value);
+            if (validationError) {
+              return NextResponse.json(
+                { success: false, message: `${value.name}: ${validationError}` },
+                { status: 400 }
+              );
+            }
 
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        if (value.size > 0 && value.name) {
-          const validationError = validateUploadFile(value);
-          if (validationError) {
-            return NextResponse.json(
-              { success: false, message: `${value.name}: ${validationError}` },
-              { status: 400 }
-            );
+            const timestamp = Date.now();
+            const cleanName = value.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const fileName = `${timestamp}_${randomUUID()}_${cleanName}`;
+            const filePath = path.join(uploadDir, fileName);
+
+            const bytes = await value.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            fs.writeFileSync(filePath, buffer);
+
+            const publicUrl = `/uploads/${jenjang}/${fileName}`;
+            filePaths[key] = publicUrl;
+            dataObj[key] = publicUrl;
           }
-
-          const timestamp = Date.now();
-          const cleanName = value.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-          const fileName = `${timestamp}_${randomUUID()}_${cleanName}`;
-          const filePath = path.join(uploadDir, fileName);
-
-          const bytes = await value.arrayBuffer();
-          const buffer = Buffer.from(bytes);
-          fs.writeFileSync(filePath, buffer);
-
-          const publicUrl = `/uploads/${jenjang}/${fileName}`;
-          filePaths[key] = publicUrl;
-          dataObj[key] = publicUrl;
-        }
-      } else {
-        if (key.endsWith('[]')) {
-          const cleanKey = key.slice(0, -2);
-          const existing = dataObj[cleanKey];
-          dataObj[cleanKey] = Array.isArray(existing) ? [...existing, value] : [value];
         } else {
-          dataObj[key] = value;
+          if (key.endsWith('[]')) {
+            const cleanKey = key.slice(0, -2);
+            const existing = dataObj[cleanKey];
+            dataObj[cleanKey] = Array.isArray(existing) ? [...existing, value] : [value];
+          } else {
+            dataObj[key] = value;
+          }
+        }
+      }
+    } else {
+      const allowedPath = new RegExp(`^/uploads/${jenjang}/[a-zA-Z0-9._-]+$`);
+      for (const [key, publicUrl] of Object.entries(filePaths)) {
+        const filePath = path.join(process.cwd(), 'public', publicUrl);
+        if (!allowedPath.test(publicUrl) || !fs.existsSync(filePath)) {
+          return NextResponse.json(
+            { success: false, message: `Lampiran ${key} tidak ditemukan. Silakan pilih ulang berkas.` },
+            { status: 400 }
+          );
         }
       }
     }
@@ -258,7 +300,12 @@ export async function POST(req: NextRequest) {
     console.error('Error during registration submission:', error);
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { success: false, message: 'Terjadi kesalahan sistem saat menyimpan pendaftaran: ' + message },
+      {
+        success: false,
+        message: message.includes('FormData')
+          ? 'Unggahan tidak lengkap atau koneksi terputus. Isian tetap tersimpan; silakan coba kirim kembali.'
+          : 'Terjadi kesalahan sistem saat menyimpan pendaftaran: ' + message,
+      },
       { status: 500 }
     );
   }

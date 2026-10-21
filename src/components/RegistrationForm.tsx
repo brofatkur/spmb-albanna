@@ -23,6 +23,7 @@ export default function RegistrationForm({ config }: Props) {
   const [regionCodes, setRegionCodes] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState<{
     nomorPendaftaran: string;
     namaLengkap: string;
@@ -307,34 +308,42 @@ export default function RegistrationForm({ config }: Props) {
     if (!validateCurrentStep()) return;
 
     setIsSubmitting(true);
+    setSubmitStatus('Menyiapkan data...');
     try {
-      const payload = new FormData();
-      payload.append('jenjang', config.id);
-
-      // Append all form inputs
-      for (const [key, value] of Object.entries(formData)) {
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            payload.append(`${key}[]`, item);
-          }
-        } else {
-          payload.append(key, value !== undefined && value !== null ? String(value) : '');
+      const uploadedPaths: Record<string, string> = {};
+      const files = Object.entries(fileMap);
+      for (let index = 0; index < files.length; index += 1) {
+        const [key, file] = files[index];
+        setSubmitStatus(`Mengunggah lampiran ${index + 1} dari ${files.length}...`);
+        const uploadResponse = await fetch(`/api/upload?jenjang=${encodeURIComponent(config.id)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+            'X-File-Name': encodeURIComponent(file.name),
+          },
+          body: file,
+        });
+        const uploadResult = await uploadResponse.json().catch(() => null);
+        if (!uploadResponse.ok || !uploadResult?.success || !uploadResult?.url) {
+          throw new Error(uploadResult?.message || `Lampiran ${file.name} gagal diunggah.`);
         }
+        uploadedPaths[key] = uploadResult.url;
       }
 
-      // Append files
-      for (const [key, file] of Object.entries(fileMap)) {
-        payload.append(key, file);
-      }
-
+      setSubmitStatus('Menyimpan pendaftaran...');
       const res = await fetch('/api/register', {
         method: 'POST',
-        body: payload,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jenjang: config.id,
+          formData,
+          filePaths: uploadedPaths,
+        }),
       });
 
-      const json = await res.json();
+      const json = await res.json().catch(() => null);
       if (!res.ok || !json.success) {
-        throw new Error(json.message || 'Gagal mengirim pendaftaran');
+        throw new Error(json?.message || 'Gagal mengirim pendaftaran');
       }
 
       setSubmitSuccess({
@@ -350,6 +359,7 @@ export default function RegistrationForm({ config }: Props) {
       alert('Terjadi kendala saat menyimpan pendaftaran: ' + message);
     } finally {
       setIsSubmitting(false);
+      setSubmitStatus('');
     }
   };
 
@@ -433,6 +443,7 @@ export default function RegistrationForm({ config }: Props) {
             <strong>Draf sebelumnya berhasil dipulihkan.</strong>{' '}
             Isian tersimpan otomatis hanya di perangkat ini selama tujuh hari
             {draftUpdatedAt ? ` • ${new Date(draftUpdatedAt).toLocaleString('id-ID')}` : ''}.
+            {' '}Lampiran perlu dipilih kembali setelah halaman dibuka ulang.
           </div>
           <button
             type="button"
@@ -758,7 +769,7 @@ export default function RegistrationForm({ config }: Props) {
               {isSubmitting ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Mengirim Pendaftaran...
+                  {submitStatus || 'Mengirim Pendaftaran...'}
                 </>
               ) : (
                 <>
