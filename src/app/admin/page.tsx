@@ -20,8 +20,10 @@ import {
   X,
   FileText,
   Copy,
-  Check
+  Check,
+  Pencil
 } from 'lucide-react';
+import AdminRegistrationEditForm from '@/components/AdminRegistrationEditForm';
 
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,6 +31,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   // Dashboard state
   const [registrations, setRegistrations] = useState<any[]>([]);
@@ -56,6 +59,7 @@ export default function AdminPage() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showGoogleSheetModal, setShowGoogleSheetModal] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
+  const [editingRegistration, setEditingRegistration] = useState(false);
 
   // Check login on mount
   useEffect(() => {
@@ -78,6 +82,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setIsLoggedIn(true);
+        setCurrentUser(data.user || null);
         setRegistrations(data.data || []);
         if (data.stats) setStats(data.stats);
       }
@@ -103,6 +108,7 @@ export default function AdminPage() {
         throw new Error(data.message || 'Login gagal.');
       }
       setIsLoggedIn(true);
+      setCurrentUser(data.user || null);
       fetchRegistrations();
     } catch (err: any) {
       setLoginError(err.message);
@@ -114,6 +120,7 @@ export default function AdminPage() {
   const handleLogout = async () => {
     await fetch('/api/admin/login', { method: 'DELETE' });
     setIsLoggedIn(false);
+    setCurrentUser(null);
   };
 
   const openDetail = async (id: number) => {
@@ -124,6 +131,8 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setSelectedItem(data.data);
+        setCurrentUser(data.user || currentUser);
+        setEditingRegistration(false);
         setNewStatus(data.data.status);
         setNewCatatan(data.data.catatan || '');
       }
@@ -558,16 +567,38 @@ function doPost(e) {
                     {selectedItem.nomor_pendaftaran}
                   </p>
                 </div>
-                <button
-                  onClick={() => setSelectedItem(null)}
-                  className="p-2 text-slate-400 hover:text-slate-800 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {currentUser?.role === 'superadmin' && !editingRegistration && (
+                    <button
+                      onClick={() => setEditingRegistration(true)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit Data
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedItem(null)}
+                    className="p-2 text-slate-400 hover:text-slate-800 rounded-lg"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+                {editingRegistration ? (
+                  <AdminRegistrationEditForm
+                    registration={selectedItem}
+                    onCancel={() => setEditingRegistration(false)}
+                    onSaved={(updated) => {
+                      setSelectedItem(updated);
+                      setEditingRegistration(false);
+                      fetchRegistrations();
+                    }}
+                  />
+                ) : (
+                  <>
                 {/* Status Updater Box */}
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                   <h3 className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">
@@ -652,10 +683,12 @@ function doPost(e) {
                       ))}
                   </div>
                 </div>
+                  </>
+                )}
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+              {!editingRegistration && <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
                 <Link
                   href={`/bukti-pendaftaran/${selectedItem.nomor_pendaftaran}`}
                   target="_blank"
@@ -670,7 +703,7 @@ function doPost(e) {
                 >
                   Tutup
                 </button>
-              </div>
+              </div>}
             </div>
           </div>
         )}

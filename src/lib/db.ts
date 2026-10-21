@@ -47,6 +47,16 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS registration_edit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    registration_id INTEGER NOT NULL,
+    admin_user_id INTEGER NOT NULL,
+    admin_username TEXT NOT NULL,
+    before_data TEXT NOT NULL,
+    after_data TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 export interface RegistrationRecord {
