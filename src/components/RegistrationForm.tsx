@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { JenjangConfig, FormField } from '@/data/forms';
 import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import RegionSelect, { RegionLevel } from './RegionSelect';
 import { UPLOAD_ACCEPT_ATTRIBUTE, validateUploadFile } from '@/lib/upload';
+import {
+  clearRegistrationDraft,
+  loadRegistrationDraft,
+  saveRegistrationDraft,
+} from '@/lib/registration-draft';
 
 interface Props {
   config: JenjangConfig;
@@ -22,8 +27,64 @@ export default function RegistrationForm({ config }: Props) {
     nomorPendaftaran: string;
     namaLengkap: string;
   } | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftUpdatedAt, setDraftUpdatedAt] = useState<number | null>(null);
 
   const steps = config.steps;
+
+  useEffect(() => {
+    let active = true;
+    loadRegistrationDraft(config.id).then((draft) => {
+      if (!active) return;
+      if (draft) {
+        setFormData(draft.formData);
+        setFileMap(draft.fileMap);
+        setRegionCodes(draft.regionCodes);
+        setCurrentStepIndex(
+          draft.currentStepIndex >= 0 && draft.currentStepIndex < config.steps.length
+            ? draft.currentStepIndex
+            : 0
+        );
+        setDraftUpdatedAt(draft.updatedAt);
+        setDraftRestored(true);
+      }
+      setDraftReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [config.id, config.steps.length]);
+
+  useEffect(() => {
+    if (!draftReady || submitSuccess) return;
+    const timeout = window.setTimeout(() => {
+      const updatedAt = Date.now();
+      void saveRegistrationDraft(config.id, {
+        formData,
+        fileMap,
+        regionCodes,
+        currentStepIndex,
+        updatedAt,
+      }).catch(() => {
+        // The form remains usable when browser storage is unavailable.
+      });
+      setDraftUpdatedAt(updatedAt);
+    }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [config.id, currentStepIndex, draftReady, fileMap, formData, regionCodes, submitSuccess]);
+
+  const discardDraft = async () => {
+    if (!window.confirm('Hapus seluruh draf isian pada perangkat ini?')) return;
+    await clearRegistrationDraft(config.id);
+    setFormData({});
+    setFileMap({});
+    setRegionCodes({});
+    setErrors({});
+    setCurrentStepIndex(0);
+    setDraftRestored(false);
+    setDraftUpdatedAt(null);
+  };
   // Helper to check conditional visibility
   const isFieldVisible = (field: FormField) => {
     const rules = config.conditionalRules;
@@ -280,6 +341,9 @@ export default function RegistrationForm({ config }: Props) {
         nomorPendaftaran: json.nomor_pendaftaran,
         namaLengkap: json.nama_lengkap,
       });
+      await clearRegistrationDraft(config.id);
+      setDraftRestored(false);
+      setDraftUpdatedAt(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Kesalahan tidak diketahui';
@@ -361,6 +425,24 @@ export default function RegistrationForm({ config }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Step Indicators Bar */}
+      {draftRestored && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-900 md:px-8">
+          <div>
+            <strong>Draf sebelumnya berhasil dipulihkan.</strong>{' '}
+            Isian tersimpan otomatis hanya di perangkat ini selama tujuh hari
+            {draftUpdatedAt ? ` • ${new Date(draftUpdatedAt).toLocaleString('id-ID')}` : ''}.
+          </div>
+          <button
+            type="button"
+            onClick={discardDraft}
+            className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:bg-blue-100"
+          >
+            Hapus Draf
+          </button>
+        </div>
+      )}
 
       {/* Step Indicators Bar */}
       <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-3 overflow-x-auto">
