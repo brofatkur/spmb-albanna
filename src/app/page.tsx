@@ -67,8 +67,9 @@ export default function HomePage() {
               <span>Pendaftaran Online 19 Oktober–7 November 2026</span>
             </div>
             <p className="text-amber-300 text-sm md:text-base font-extrabold tracking-[0.18em] uppercase mb-3">Mulai dari sini</p>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] max-w-4xl mx-auto">
-              Daftarkan Ananda di<br /><span className="text-amber-300">Sekolah Albanna</span>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] max-w-5xl mx-auto">
+              Daftarkan Ananda di <span className="text-amber-300">Sekolah Albanna</span>
+              <span className="block mt-2 text-2xl md:text-4xl lg:text-5xl">Religius, Unggul &amp; Berdaya Saing Global</span>
             </h1>
             <p className="mt-5 text-emerald-50/90 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
               Pilih jenjang pendidikan, lengkapi formulir secara online, dan dapatkan nomor pendaftaran SPMB Tahun Ajaran 2027–2028.
