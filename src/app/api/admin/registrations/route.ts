@@ -93,10 +93,30 @@ export async function GET(req: NextRequest) {
     rejected: (db.prepare(`SELECT COUNT(*) as c FROM registrations WHERE status = 'Ditolak'`).get() as any).c,
   };
 
+  // Daily registration trend for the last 14 days in Bali time (WITA / UTC+8).
+  const dailyRows = db.prepare(`
+    SELECT date(created_at, '+8 hours') as registration_date, COUNT(*) as count
+    FROM registrations
+    ${whereSql ? `${whereSql} AND` : 'WHERE'} date(created_at, '+8 hours') >= date('now', '+8 hours', '-13 days')
+    GROUP BY date(created_at, '+8 hours')
+    ORDER BY registration_date ASC
+  `).all(...params) as Array<{ registration_date: string; count: number }>;
+
+  const dailyCountMap = new Map(dailyRows.map((row) => [row.registration_date, row.count]));
+  const nowWita = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const todayUtc = Date.UTC(nowWita.getUTCFullYear(), nowWita.getUTCMonth(), nowWita.getUTCDate());
+  const dailyStats = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(todayUtc - (13 - index) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    return { date, count: dailyCountMap.get(date) || 0 };
+  });
+
   return NextResponse.json({
     success: true,
     data: rows,
     stats,
+    dailyStats,
     user: admin,
   });
 }

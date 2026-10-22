@@ -21,7 +21,9 @@ import {
   FileText,
   Copy,
   Check,
-  Pencil
+  Pencil,
+  BarChart3,
+  Users
 } from 'lucide-react';
 import AdminRegistrationEditForm from '@/components/AdminRegistrationEditForm';
 
@@ -46,6 +48,7 @@ export default function AdminPage() {
     accepted: 0,
     rejected: 0,
   });
+  const [dailyStats, setDailyStats] = useState<Array<{ date: string; count: number }>>([]);
   const [loading, setLoading] = useState(false);
   const [filterJenjang, setFilterJenjang] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -85,6 +88,7 @@ export default function AdminPage() {
         setCurrentUser(data.user || null);
         setRegistrations(data.data || []);
         if (data.stats) setStats(data.stats);
+        setDailyStats(data.dailyStats || []);
       }
     } catch (e) {
       console.error(e);
@@ -390,6 +394,9 @@ function doPost(e) {
             <p className="text-2xl font-black text-emerald-600 mt-1">{stats.accepted}</p>
           </div>
         </div>
+
+        {/* DAILY REGISTRATION CHART */}
+        <DailyRegistrationChart data={dailyStats} loading={loading} />
 
         {/* Filter & Search Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -793,5 +800,80 @@ function doPost(e) {
         )}
       </main>
     </div>
+  );
+}
+
+function DailyRegistrationChart({
+  data,
+  loading,
+}: {
+  data: Array<{ date: string; count: number }>;
+  loading: boolean;
+}) {
+  const maxCount = Math.max(...data.map((item) => item.count), 1);
+  const total = data.reduce((sum, item) => sum + item.count, 0);
+  const average = data.length ? total / data.length : 0;
+  const dateFormatter = new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-2xs mb-6 overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-extrabold text-slate-900">Pendaftar Harian</h2>
+            <p className="text-[11px] text-slate-500">14 hari terakhir · Waktu Indonesia Tengah (WITA)</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold">
+            <Users className="w-3.5 h-3.5" /> {total} pendaftar
+          </span>
+          <span className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold">
+            Rata-rata {average.toLocaleString('id-ID', { maximumFractionDigits: 1 })}/hari
+          </span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto px-4 pb-4">
+        {loading && data.length === 0 ? (
+          <div className="h-52 flex items-center justify-center text-xs text-slate-400">Memuat grafik pendaftar...</div>
+        ) : (
+          <div
+            className="min-w-[720px] h-56 pt-5 grid gap-2 border-b border-slate-200"
+            style={{ gridTemplateColumns: `repeat(${Math.max(data.length, 1)}, minmax(36px, 1fr))` }}
+            role="img"
+            aria-label={`Grafik pendaftar harian 14 hari terakhir, total ${total} pendaftar`}
+          >
+            {data.map((item) => {
+              const label = dateFormatter.format(new Date(`${item.date}T00:00:00Z`));
+              const height = item.count === 0 ? 2 : Math.max(10, (item.count / maxCount) * 100);
+
+              return (
+                <div key={item.date} className="h-full flex flex-col items-center justify-end group">
+                  <span className={`text-[11px] font-extrabold mb-1 ${item.count > 0 ? 'text-emerald-800' : 'text-slate-400'}`}>
+                    {item.count}
+                  </span>
+                  <div className="h-36 w-full flex items-end justify-center px-1">
+                    <div
+                      className={`w-full max-w-9 rounded-t-md transition-all ${item.count > 0 ? 'bg-gradient-to-t from-emerald-700 to-emerald-400 group-hover:from-emerald-800 group-hover:to-emerald-500' : 'bg-slate-200'}`}
+                      style={{ height: `${height}%` }}
+                      title={`${label}: ${item.count} pendaftar`}
+                    />
+                  </div>
+                  <span className="h-8 pt-2 text-[10px] font-semibold text-slate-500 whitespace-nowrap">{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
