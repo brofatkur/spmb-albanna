@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { validateUploadFile } from '@/lib/upload';
+import { getRequiredDocumentFields } from '@/lib/required-documents';
 
 export async function POST(req: NextRequest) {
   try {
@@ -141,6 +142,19 @@ export async function POST(req: NextRequest) {
           );
         }
       }
+    }
+
+    const missingRequiredDocuments = getRequiredDocumentFields(jenjang).filter(
+      (document) => !filePaths[document.name]
+    );
+    if (missingRequiredDocuments.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `${missingRequiredDocuments.map((document) => document.label).join(' dan ')} wajib diunggah.`,
+        },
+        { status: 400 }
+      );
     }
 
     const firstText = (...values: Array<string | string[] | null | undefined>) => {

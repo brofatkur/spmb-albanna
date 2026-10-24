@@ -6,6 +6,7 @@ import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, FileText, CheckC
 import Link from 'next/link';
 import RegionSelect, { RegionLevel } from './RegionSelect';
 import { UPLOAD_ACCEPT_ATTRIBUTE, validateUploadFile } from '@/lib/upload';
+import { getRequiredDocumentFields, isRequiredDocumentField } from '@/lib/required-documents';
 import {
   clearRegistrationDraft,
   loadRegistrationDraft,
@@ -269,7 +270,8 @@ export default function RegistrationForm({ config }: Props) {
       // Informational blocks mirror Elementor's HTML fields and do not accept input.
       if (f.type === 'html1') continue;
 
-      if (f.required) {
+      const isRequired = f.required || isRequiredDocumentField(f.name, config.id);
+      if (isRequired) {
         if (f.type === 'upload') {
           if (!fileMap[f.name]) {
             stepErrors[f.name] = 'Berkas ini wajib diunggah.';
@@ -319,6 +321,26 @@ export default function RegistrationForm({ config }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateCurrentStep()) return;
+
+    const missingDocuments = getRequiredDocumentFields(config.id).filter(
+      (document) => !fileMap[document.name]
+    );
+    if (missingDocuments.length > 0) {
+      const requiredErrors = Object.fromEntries(
+        missingDocuments.map((document) => [
+          document.name,
+          `${document.label} wajib diunggah sebelum melanjutkan.`,
+        ])
+      );
+      setErrors(requiredErrors);
+
+      const documentStepIndex = config.steps.findIndex((step) =>
+        step.fields.some((field) => missingDocuments.some((document) => document.name === field.name))
+      );
+      if (documentStepIndex >= 0) setCurrentStepIndex(documentStepIndex);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitStatus('Menyiapkan data...');
@@ -557,6 +579,7 @@ export default function RegistrationForm({ config }: Props) {
             const isFullWidth = field.width === 100 || !field.width;
             const colSpanClass = isFullWidth ? 'md:col-span-2' : 'md:col-span-1';
             const fieldError = errors[field.name];
+            const fieldIsRequired = field.required || isRequiredDocumentField(field.name, config.id);
             const regionMeta = getRegionMeta(field.name);
 
             if (field.type === 'html1') {
@@ -574,7 +597,7 @@ export default function RegistrationForm({ config }: Props) {
               <div key={field.name} className={colSpanClass}>
                 <label className="block text-sm font-semibold text-slate-800 mb-1.5">
                   {field.label}
-                  {field.required && <span className="text-rose-500 ml-1">*</span>}
+                  {fieldIsRequired && <span className="text-rose-500 ml-1">*</span>}
                 </label>
 
                 {field.help && (
@@ -687,6 +710,7 @@ export default function RegistrationForm({ config }: Props) {
                         onChange={(e) => handleFileChange(field.name, e.target.files?.[0] || null)}
                         className="sr-only"
                         accept={UPLOAD_ACCEPT_ATTRIBUTE}
+                        aria-required={fieldIsRequired}
                       />
                       <Upload className={`w-8 h-8 mb-2 ${fileMap[field.name] ? 'text-emerald-600' : 'text-slate-400'}`} />
                       {fileMap[field.name] ? (
@@ -703,6 +727,9 @@ export default function RegistrationForm({ config }: Props) {
                           <p className="text-xs font-semibold text-slate-700">
                             Pilih Berkas atau Tarik ke Sini
                           </p>
+                          {fieldIsRequired && (
+                            <p className="text-[11px] font-bold text-rose-600 mt-1">Dokumen wajib diunggah</p>
+                          )}
                           <p className="text-[11px] text-slate-400 mt-1">
                             PDF atau gambar umum, termasuk JPG, PNG, WEBP dan HEIC (maks. 5MB)
                           </p>
