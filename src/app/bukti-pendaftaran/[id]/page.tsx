@@ -100,6 +100,18 @@ export default async function BuktiPendaftaranPage({ params }: Props) {
     formData['handphone_ibu'] ||
     '-';
 
+  const detailJenjang = jenjang === 'paud'
+    ? {
+        label: 'Tingkat PAUD',
+        value: formData['tingkat'] || formData['tingkat_paud'] || '-',
+      }
+    : jenjang === 'sd'
+      ? {
+          label: 'Pilihan Kelas',
+          value: formData['pilihan_kelas_sd'] || formData['pilihan_kelas'] || '-',
+        }
+      : null;
+
   const formatTanggalIndo = (dateStr?: string) => {
     const d = dateStr ? new Date(dateStr) : new Date();
     const bulan = [
@@ -189,6 +201,13 @@ export default async function BuktiPendaftaranPage({ params }: Props) {
                 <td className="py-1">:</td>
                 <td className="py-1 font-semibold uppercase text-slate-900">{record.jenjang}</td>
               </tr>
+              {detailJenjang && (
+                <tr>
+                  <td className="py-1 text-slate-700">{detailJenjang.label}</td>
+                  <td className="py-1">:</td>
+                  <td className="py-1 font-semibold text-slate-900">{detailJenjang.value}</td>
+                </tr>
+              )}
               <tr>
                 <td className="py-1 text-slate-700">Nama Sekolah Asal</td>
                 <td className="py-1">:</td>

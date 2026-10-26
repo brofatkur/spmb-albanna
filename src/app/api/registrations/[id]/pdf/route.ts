@@ -145,6 +145,11 @@ export async function GET(
     : valueFrom(`handphone_ayah_${jenjang}`, `no_handphone_ayah_${jenjang}`, 'handphone_ayah');
   const namaIbu = valueFrom(`nama_ibu_${jenjang}`, 'nama_ibu');
   const noHpIbu = valueFrom(`handphone_ibu_${jenjang}`, `no_handphone_ibu_${jenjang}`, 'handphone_ibu');
+  const detailJenjang = jenjang === 'paud'
+    ? { label: 'Tingkat PAUD', value: valueFrom('tingkat', 'tingkat_paud') }
+    : jenjang === 'sd'
+      ? { label: 'Pilihan Kelas', value: valueFrom('pilihan_kelas_sd', 'pilihan_kelas') }
+      : null;
 
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Bukti Pendaftaran ${safeText(record.nomor_pendaftaran)}`);
@@ -209,6 +214,17 @@ export async function GET(
   y -= 22;
   y = drawValueRow({ page, font, bold, y, label: 'Nama Murid', value: namaMurid, emphasize: true });
   y = drawValueRow({ page, font, bold, y, label: 'Jenjang', value: safeText(record.jenjang).toUpperCase(), emphasize: true });
+  if (detailJenjang) {
+    y = drawValueRow({
+      page,
+      font,
+      bold,
+      y,
+      label: detailJenjang.label,
+      value: detailJenjang.value,
+      emphasize: true,
+    });
+  }
   y = drawValueRow({ page, font, bold, y, label: 'Nama Sekolah Asal', value: namaSekolahAsal });
   y = drawValueRow({ page, font, bold, y, label: 'NISN', value: nisn });
   y = drawValueRow({ page, font, bold, y, label: 'Alamat Domisili', value: alamatDomisili });
