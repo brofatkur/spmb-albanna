@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { JenjangConfig, FormField } from '@/data/forms';
 import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 import RegionSelect, { RegionLevel } from './RegionSelect';
@@ -445,9 +446,16 @@ export default function RegistrationForm({ config }: Props) {
             {submitSuccess.nomorPendaftaran}
           </p>
           <p className="text-xs text-slate-400 mt-2">
-            Simpan nomor pendaftaran ini. Data, status, bukti pendaftaran, dan dokumen hanya dapat diakses oleh petugas SPMB.
+            Simpan nomor pendaftaran ini untuk mengecek status. Data pribadi, bukti pendaftaran, dan dokumen hanya dapat diakses oleh petugas SPMB.
           </p>
         </div>
+
+        <Link
+          href="/cek-status"
+          className="inline-flex items-center justify-center rounded-xl bg-emerald-700 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-800"
+        >
+          Cek Status Pendaftaran
+        </Link>
 
         <p className="text-sm text-slate-600">
           Untuk informasi lanjutan, silakan hubungi panitia SPMB Sekolah Albanna.
