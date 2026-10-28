@@ -8,6 +8,7 @@ import {
   Baby,
   BookOpen,
   CalendarDays,
+  Download,
   ExternalLink,
   GraduationCap,
   MessageCircle,
@@ -25,25 +26,25 @@ const whatsappUrl =
 
 const jenjangList = [
   {
-    id: 'paud', slug: '/spmb-paud', badge: 'KB & TK', name: 'PAUD Albanna',
+    id: 'paud', slug: '/spmb-paud', brochure: '/brosur/Brosur-SPMB-PAUD-2027-2028.pdf', badge: 'KB & TK', name: 'PAUD Albanna',
     desc: 'Membimbing fitrah ananda sejak dini melalui penanaman tauhid, adab, karakter islami, dan kegiatan motorik sensorik yang menyenangkan.',
     color: 'from-amber-500 to-orange-500', bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
     btnColor: 'bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500', icon: Baby, usia: 'Usia 2–6 tahun',
   },
   {
-    id: 'sd', slug: '/spmb-sdit', badge: 'SDIT', name: 'SDIT Albanna',
+    id: 'sd', slug: '/spmb-sdit', brochure: '/brosur/Brosur-SPMB-SD-2027-2028.pdf', badge: 'SDIT', name: 'SDIT Albanna',
     desc: 'Menumbuhkan generasi Qurani, berakhlak mulia, kuat dalam literasi dan numerasi, serta siap menjadi teladan di masyarakat.',
     color: 'from-emerald-600 to-teal-600', bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     btnColor: 'bg-emerald-700 hover:bg-emerald-800 focus-visible:ring-emerald-500', icon: BookOpen, usia: 'Usia 6–12 tahun',
   },
   {
-    id: 'smp', slug: '/spmb-smp', badge: 'SMP', name: 'SMP Albanna',
+    id: 'smp', slug: '/spmb-smp', brochure: '/brosur/Brosur-SPMB-SMP-2027-2028.pdf', badge: 'SMP', name: 'SMP Albanna',
     desc: 'Membentuk kemandirian, kepemimpinan, tahfidz Al-Quran, serta penguasaan sains, teknologi, dan bahasa global.',
     color: 'from-teal-600 to-cyan-600', bgColor: 'bg-teal-50 text-teal-700 border-teal-200',
     btnColor: 'bg-teal-700 hover:bg-teal-800 focus-visible:ring-teal-500', icon: School, usia: 'Lulusan SD / MI',
   },
   {
-    id: 'sma', slug: '/spmb-sma', badge: 'SMA', name: 'SMA Albanna',
+    id: 'sma', slug: '/spmb-sma', brochure: '/brosur/Brosur-SPMB-SMA-2027-2028.pdf', badge: 'SMA', name: 'SMA Albanna',
     desc: 'Mempersiapkan calon pemimpin yang berdaya saing global, berkarakter islami, dan siap menembus perguruan tinggi unggulan.',
     color: 'from-green-700 to-emerald-700', bgColor: 'bg-green-50 text-green-800 border-green-200',
     btnColor: 'bg-green-800 hover:bg-green-900 focus-visible:ring-green-500', icon: GraduationCap, usia: 'Lulusan SMP / MTs',
@@ -106,6 +107,13 @@ export default function HomePage() {
                     <Link href={item.slug} className={`mt-6 w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-1.5 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${item.btnColor}`}>
                       Daftar {item.badge} <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </Link>
+                    <a
+                      href={item.brochure}
+                      download
+                      className="mt-2.5 w-full py-3 rounded-xl border border-slate-300 bg-white font-bold text-sm text-slate-700 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-800 flex items-center justify-center gap-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    >
+                      <Download className="w-4 h-4" aria-hidden="true" /> Download Brosur
+                    </a>
                   </div>
                 </article>
               );
