@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { JenjangConfig, FormField } from '@/data/forms';
-import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Check, ChevronRight, ChevronLeft, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 import RegionSelect, { RegionLevel } from './RegionSelect';
 import { UPLOAD_ACCEPT_ATTRIBUTE, validateUploadFile } from '@/lib/upload';
 import { getRequiredDocumentFields, isRequiredDocumentField } from '@/lib/required-documents';
@@ -446,26 +445,13 @@ export default function RegistrationForm({ config }: Props) {
             {submitSuccess.nomorPendaftaran}
           </p>
           <p className="text-xs text-slate-400 mt-2">
-            Simpan nomor pendaftaran ini untuk mengecek status seleksi atau mencetak bukti pendaftaran.
+            Simpan nomor pendaftaran ini. Data, status, bukti pendaftaran, dan dokumen hanya dapat diakses oleh petugas SPMB.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href={`/bukti-pendaftaran/${submitSuccess.nomorPendaftaran}`}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition"
-          >
-            <FileText className="w-4 h-4" />
-            Cetak Bukti Pendaftaran (PDF)
-          </Link>
-          <Link
-            href="/cek-status"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition"
-          >
-            Cek Status Pendaftaran
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <p className="text-sm text-slate-600">
+          Untuk informasi lanjutan, silakan hubungi panitia SPMB Sekolah Albanna.
+        </p>
       </div>
     );
   }

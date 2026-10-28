@@ -4,6 +4,10 @@ import { notFound } from 'next/navigation';
 import PrintButton from './PrintButton';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { getCurrentAdminSession } from '@/lib/admin-session';
+import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,6 +27,11 @@ interface RegistrationRecord {
 }
 
 export default async function BuktiPendaftaranPage({ params }: Props) {
+  const admin = await getCurrentAdminSession();
+  if (!admin) {
+    redirect('/admin');
+  }
+
   const { id } = await params;
 
   // Historical imports can make a public registration number collide with a

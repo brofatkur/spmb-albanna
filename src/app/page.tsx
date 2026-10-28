@@ -9,11 +9,9 @@ import {
   BookOpen,
   CalendarDays,
   ExternalLink,
-  FileCheck2,
   GraduationCap,
   MessageCircle,
   School,
-  Search,
   Sparkles,
 } from 'lucide-react';
 
@@ -139,16 +137,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="max-w-4xl mx-auto my-16 px-4">
-          <div className="bg-white rounded-2xl border border-emerald-900/10 p-8 md:p-10 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-semibold mb-2"><FileCheck2 className="w-3.5 h-3.5" /><span>Sudah Mendaftar?</span></div>
-              <h3 className="text-2xl font-black text-slate-900">Cek Status & Unduh Bukti PDF</h3>
-              <p className="text-slate-600 text-xs md:text-sm max-w-md mt-1">Cari pendaftaran menggunakan nomor pendaftaran, NIK, NISN, atau nomor HP ayah dan ibu.</p>
-            </div>
-            <Link href="/cek-status" className="px-6 py-3 bg-emerald-700 text-white hover:bg-emerald-800 rounded-xl font-bold text-sm shadow-md transition shrink-0 flex items-center gap-2"><Search className="w-4 h-4" /> Cek Status</Link>
-          </div>
-        </section>
       </main>
       <Footer />
 

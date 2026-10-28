@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { getCurrentAdminSession, verifyInternalResourceToken } from '@/lib/admin-session';
 
 export const runtime = 'nodejs';
 
@@ -37,10 +38,24 @@ const getUploadFile = async (segments: string[]) => {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path: pathSegments } = await params;
+  const resource = `/uploads/${(pathSegments || []).map(encodeURIComponent).join('/')}`;
+  const admin = await getCurrentAdminSession();
+  const internalToken = request.nextUrl.searchParams.get('access') || '';
+
+  if (!admin && !verifyInternalResourceToken(internalToken, resource)) {
+    return Response.json(
+      { error: 'Akses lampiran hanya tersedia untuk petugas.' },
+      {
+        status: 401,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
+      }
+    );
+  }
+
   const uploadFile = await getUploadFile(pathSegments || []);
 
   if (!uploadFile) {
