@@ -10,6 +10,7 @@ import path from 'path';
 import { randomUUID } from 'crypto';
 import { validateUploadFile } from '@/lib/upload';
 import { getRequiredDocumentFields } from '@/lib/required-documents';
+import { createInternalResourceToken } from '@/lib/admin-session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -226,7 +227,9 @@ export async function POST(req: NextRequest) {
     const sheetPayload = Object.fromEntries(
       Object.entries(dataObj).map(([key, value]) => {
         if (typeof value === 'string' && value.startsWith('/uploads/')) {
-          return [key, new URL(value, appUrl).toString()];
+          const privateUrl = new URL(value, appUrl);
+          privateUrl.searchParams.set('access', createInternalResourceToken(value));
+          return [key, privateUrl.toString()];
         }
         return [key, value];
       })
@@ -331,11 +334,15 @@ export async function POST(req: NextRequest) {
     // The Apps Script webhook has already copied uploaded attachments to the
     // student's Drive folder. After the local record exists, ask it to fetch
     // and store the generated registration receipt in the same folder.
+    const pdfResource = `/api/registrations/${encodeURIComponent(nomorPendaftaran)}/pdf`;
+    const privatePdfUrl = new URL(pdfResource, appUrl);
+    privatePdfUrl.searchParams.set('access', createInternalResourceToken(pdfResource));
+
     void syncGoogleDriveRegistrationPdf({
       nomor_pendaftaran: nomorPendaftaran,
       jenjang: jenjang.toUpperCase(),
       nama_lengkap: String(namaLengkap),
-      pdf_url: `${appUrl}/api/registrations/${encodeURIComponent(nomorPendaftaran)}/pdf`,
+      pdf_url: privatePdfUrl.toString(),
     }).then((pdfSyncResult) => {
       if (!pdfSyncResult.success) {
         console.error('Failed to sync registration PDF to Google Drive:', pdfSyncResult);

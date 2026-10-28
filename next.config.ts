@@ -22,6 +22,24 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/api/check-status",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          },
+        ],
+      },
+      {
+        source: "/uploads/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          },
+        ],
+      },
     ];
   },
   turbopack: {

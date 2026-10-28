@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto';
+import { cookies } from 'next/headers';
 
 export interface AdminSession {
   id: number;
@@ -43,5 +44,51 @@ export function verifyAdminSession(token: string): AdminSession | null {
     return session;
   } catch {
     return null;
+  }
+}
+
+export async function getCurrentAdminSession(): Promise<AdminSession | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_session')?.value;
+  if (!token) return null;
+
+  try {
+    return verifyAdminSession(token);
+  } catch {
+    return null;
+  }
+}
+
+interface InternalResourceAccess {
+  resource: string;
+  expiresAt: number;
+}
+
+export function createInternalResourceToken(resource: string, ttlMs = 10 * 60 * 1000): string {
+  const payload = Buffer.from(JSON.stringify({
+    resource,
+    expiresAt: Date.now() + ttlMs,
+  } satisfies InternalResourceAccess)).toString('base64url');
+
+  return `${payload}.${sign(payload)}`;
+}
+
+export function verifyInternalResourceToken(token: string, resource: string): boolean {
+  const [payload, receivedSignature] = token.split('.');
+  if (!payload || !receivedSignature) return false;
+
+  const expectedSignature = sign(payload);
+  const expected = Buffer.from(expectedSignature);
+  const received = Buffer.from(receivedSignature);
+  if (expected.length !== received.length || !timingSafeEqual(expected, received)) return false;
+
+  try {
+    const access = JSON.parse(
+      Buffer.from(payload, 'base64url').toString('utf8')
+    ) as InternalResourceAccess;
+
+    return access.resource === resource && access.expiresAt >= Date.now();
+  } catch {
+    return false;
   }
 }

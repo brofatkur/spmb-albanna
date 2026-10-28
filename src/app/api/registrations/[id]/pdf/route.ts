@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb, PDFFont, PDFPage } from 'pdf-lib';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import db from '@/lib/db';
+import { getCurrentAdminSession, verifyInternalResourceToken } from '@/lib/admin-session';
 
 export const runtime = 'nodejs';
 
@@ -87,10 +88,24 @@ const formatTanggalIndo = (dateValue?: string) => {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const resource = `/api/registrations/${encodeURIComponent(id)}/pdf`;
+  const admin = await getCurrentAdminSession();
+  const internalToken = request.nextUrl.searchParams.get('access') || '';
+
+  if (!admin && !verifyInternalResourceToken(internalToken, resource)) {
+    return Response.json(
+      { error: 'Akses bukti pendaftaran hanya tersedia untuk petugas.' },
+      {
+        status: 401,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
+      }
+    );
+  }
+
   // A public registration number can be the same as another row's internal
   // SQLite id after importing historical records. Resolve the registration
   // number first so /150 cannot accidentally return the row whose id is 150.
