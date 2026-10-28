@@ -48,11 +48,6 @@ export default function Footer() {
                 SPMB SMA
               </Link>
             </li>
-            <li className="pt-2">
-              <Link href="/cek-status" className="text-emerald-400 hover:text-emerald-300 font-medium transition">
-                Cek Status Pendaftaran →
-              </Link>
-            </li>
           </ul>
         </div>
 
