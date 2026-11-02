@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { getCurrentAdminSession, verifyInternalResourceToken } from '@/lib/admin-session';
+import {
+  getCurrentAdminSession,
+  verifyGoogleSheetWebhookToken,
+  verifyInternalResourceToken,
+} from '@/lib/admin-session';
 
 export const runtime = 'nodejs';
 
@@ -45,8 +49,11 @@ export async function GET(
   const resource = `/uploads/${(pathSegments || []).map(encodeURIComponent).join('/')}`;
   const admin = await getCurrentAdminSession();
   const internalToken = request.nextUrl.searchParams.get('access') || '';
+  const trustedWebhook = verifyGoogleSheetWebhookToken(
+    request.headers.get('x-spmb-webhook-token') || ''
+  );
 
-  if (!admin && !verifyInternalResourceToken(internalToken, resource)) {
+  if (!admin && !trustedWebhook && !verifyInternalResourceToken(internalToken, resource)) {
     return Response.json(
       { error: 'Akses lampiran hanya tersedia untuk petugas.' },
       {

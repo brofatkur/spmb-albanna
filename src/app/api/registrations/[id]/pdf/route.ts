@@ -3,7 +3,11 @@ import { PDFDocument, StandardFonts, rgb, PDFFont, PDFPage } from 'pdf-lib';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import db from '@/lib/db';
-import { getCurrentAdminSession, verifyInternalResourceToken } from '@/lib/admin-session';
+import {
+  getCurrentAdminSession,
+  verifyGoogleSheetWebhookToken,
+  verifyInternalResourceToken,
+} from '@/lib/admin-session';
 
 export const runtime = 'nodejs';
 
@@ -95,8 +99,11 @@ export async function GET(
   const resource = `/api/registrations/${encodeURIComponent(id)}/pdf`;
   const admin = await getCurrentAdminSession();
   const internalToken = request.nextUrl.searchParams.get('access') || '';
+  const trustedWebhook = verifyGoogleSheetWebhookToken(
+    request.headers.get('x-spmb-webhook-token') || ''
+  );
 
-  if (!admin && !verifyInternalResourceToken(internalToken, resource)) {
+  if (!admin && !trustedWebhook && !verifyInternalResourceToken(internalToken, resource)) {
     return Response.json(
       { error: 'Akses bukti pendaftaran hanya tersedia untuk petugas.' },
       {

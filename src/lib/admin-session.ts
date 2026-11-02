@@ -92,3 +92,12 @@ export function verifyInternalResourceToken(token: string, resource: string): bo
     return false;
   }
 }
+
+export function verifyGoogleSheetWebhookToken(token: string): boolean {
+  const expectedToken = process.env.GOOGLE_SHEET_TOKEN || '';
+  if (!token || !expectedToken) return false;
+
+  const expected = Buffer.from(expectedToken);
+  const received = Buffer.from(token);
+  return expected.length === received.length && timingSafeEqual(expected, received);
+}
