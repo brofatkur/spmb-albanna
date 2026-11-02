@@ -24,8 +24,21 @@ interface RegistrationRecord {
   status?: string;
 }
 
+const sanitizePdfText = (value: unknown) => String(value ?? '')
+  .normalize('NFKC')
+  .replace(/[\u2018\u2019]/g, "'")
+  .replace(/[\u201C\u201D]/g, '"')
+  .replace(/[\u2013\u2014]/g, '-')
+  .replace(/\u2026/g, '...')
+  // The built-in Helvetica fonts use WinAnsi and cannot encode emoji or
+  // arbitrary Unicode. Keep common Latin text and discard unsupported glyphs
+  // so one pasted emoji cannot make the whole registration PDF fail.
+  .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
 const safeText = (value: unknown) => {
-  const text = String(value ?? '').trim();
+  const text = sanitizePdfText(value);
   return text || '-';
 };
 
