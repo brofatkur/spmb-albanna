@@ -129,7 +129,7 @@ export default function HomePage() {
               <p className="text-slate-600 text-sm max-w-xl mx-auto mt-2">Tekan gambar untuk membukanya dalam ukuran penuh agar seluruh informasi mudah dibaca.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start">
-              <InfoImage src="/spmb/alur-spmb-2027-2028.png" title="Alur SPMB" description="Jadwal proses penerimaan murid baru." alt="Alur SPMB Sekolah Albanna Tahun Ajaran 2027–2028" />
+              <InfoImage src="/spmb/alur-spmb-2027-2028-gelombang-2.png" title="Alur SPMB Gelombang 2" description="Jadwal proses penerimaan murid baru Gelombang 2." alt="Alur SPMB Gelombang 2 Sekolah Albanna Tahun Ajaran 2027–2028" />
               <InfoImage src="/spmb/biaya-spmb-2027-2028.png" title="Biaya SPMB" description="Rincian biaya setiap jenjang pendidikan." alt="Biaya SPMB Sekolah Albanna Tahun Ajaran 2027–2028" />
             </div>
             <div className="mt-10 bg-[#075b38] rounded-2xl px-6 py-7 md:px-9 md:py-8 text-white flex flex-col md:flex-row items-center justify-between gap-5 shadow-lg">
